@@ -2,10 +2,6 @@
 <html>
 <head>
   <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CommSession</title>
-
   <style>
     * {
       margin: 0;
@@ -14,66 +10,22 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      padding: 16px;
+      color: #1F2937;
       font-size: 14px;
       line-height: 1.5;
-      color: #374151;
-      background: #ffffff;
-      padding: 16px;
     }
 
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      background: #4F46E5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
+    h3 {
       font-size: 16px;
-    }
-
-    .title {
-      font-size: 18px;
       font-weight: 600;
+      margin-bottom: 8px;
       color: #111827;
     }
 
-    .status-section {
-      margin-bottom: 24px;
-    }
-
-    .section-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-    }
-
-    .status-card {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 12px;
-    }
-
     .status-badge {
-      display: inline-flex;
-      align-items: center;
+      display: inline-block;
       padding: 4px 12px;
       border-radius: 12px;
       font-size: 12px;
@@ -81,118 +33,124 @@
       margin-bottom: 8px;
     }
 
-    .status-badge.draft {
-      background: #f3f4f6;
-      color: #4b5563;
+    .status-draft { background: #E5E7EB; color: #374151; }
+    .status-in_review { background: #FEF3C7; color: #92400E; }
+    .status-approved { background: #D1FAE5; color: #065F46; }
+    .status-changes_requested { background: #DBEAFE; color: #1E40AF; }
+    .status-rejected { background: #FEE2E2; color: #991B1B; }
+
+    .card {
+      background: #F9FAFB;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
     }
 
-    .status-badge.active {
-      background: #dbeafe;
-      color: #1e40af;
+    .card p {
+      margin: 4px 0;
+      font-size: 13px;
+      color: #4B5563;
     }
 
-    .status-badge.approved {
-      background: #d1fae5;
-      color: #065f46;
+    .divider {
+      border: none;
+      border-top: 1px solid #E5E7EB;
+      margin: 16px 0;
     }
 
-    .status-badge.rejected {
-      background: #fee2e2;
-      color: #991b1b;
+    .approvers-list {
+      margin: 12px 0;
     }
 
-    .status-badge.paused {
-      background: #fed7aa;
-      color: #9a3412;
-    }
-
-    .info-row {
+    .approver-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 8px 0;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid #F3F4F6;
     }
 
-    .info-row:last-child {
+    .approver-item:last-child {
       border-bottom: none;
     }
 
-    .info-label {
+    .approver-name {
       font-size: 13px;
-      color: #6b7280;
+      color: #374151;
     }
 
-    .info-value {
-      font-size: 13px;
-      color: #111827;
-      font-weight: 500;
+    .approver-role {
+      font-size: 12px;
+      color: #6B7280;
     }
 
-    .button {
+    .changes-banner {
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #92400E;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
       width: 100%;
       padding: 10px 16px;
-      border: none;
       border-radius: 6px;
+      border: none;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
-      margin-bottom: 8px;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
-    .button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .button:active {
-      transform: translateY(0);
-    }
-
-    .button-primary {
-      background: #4F46E5;
+    .btn-primary {
+      background: #2563EB;
       color: white;
     }
 
-    .button-primary:hover {
-      background: #4338ca;
+    .btn-primary:hover {
+      background: #1D4ED8;
     }
 
-    .button-secondary {
-      background: #ffffff;
-      color: #374151;
-      border: 1px solid #d1d5db;
+    .btn-secondary {
+      background: white;
+      color: #2563EB;
+      border: 1px solid #2563EB;
     }
 
-    .button-secondary:hover {
-      background: #f9fafb;
+    .btn-secondary:hover {
+      background: #EFF6FF;
     }
 
-    .button-danger {
-      background: #ffffff;
-      color: #dc2626;
-      border: 1px solid #fecaca;
-    }
-
-    .button-danger:hover {
-      background: #fef2f2;
-    }
-
-    .button:disabled {
+    .btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none !important;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6B7280;
     }
 
     .spinner {
-      border: 2px solid #f3f4f6;
-      border-top: 2px solid #4F46E5;
+      border: 2px solid #F3F4F6;
+      border-top: 2px solid #2563EB;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 12px;
     }
 
     @keyframes spin {
@@ -200,387 +158,340 @@
       100% { transform: rotate(360deg); }
     }
 
-    .loading {
+    .error-message {
+      background: #FEE2E2;
+      border: 1px solid #FCA5A5;
+      border-radius: 6px;
+      padding: 12px;
+      color: #991B1B;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .sync-indicator {
+      font-size: 12px;
+      color: #059669;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .unlinked-state {
       text-align: center;
       padding: 20px;
-      color: #6b7280;
     }
 
-    .error {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #991b1b;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 12px;
-      font-size: 13px;
-    }
-
-    .success {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      color: #166534;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 12px;
-      font-size: 13px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 32px 16px;
-      color: #6b7280;
-    }
-
-    .empty-state-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-      opacity: 0.3;
-    }
-
-    .empty-state-title {
-      font-size: 16px;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 8px;
-    }
-
-    .empty-state-text {
-      font-size: 13px;
+    .unlinked-state p {
+      color: #6B7280;
+      margin: 12px 0 20px;
       line-height: 1.6;
-    }
-
-    .link {
-      color: #4F46E5;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    .link:hover {
-      text-decoration: underline;
-    }
-
-    .divider {
-      height: 1px;
-      background: #e5e7eb;
-      margin: 20px 0;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .stat-item {
-      background: #f9fafb;
-      padding: 12px;
-      border-radius: 6px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 20px;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    #app {
-      min-height: 400px;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <div class="loading">
-      <div class="spinner"></div>
-      <p style="margin-top: 12px;">Loading...</p>
+    <!-- Loading State -->
+    <div id="loading-state">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    </div>
+
+    <!-- Unlinked State -->
+    <div id="unlinked-state" style="display: none;">
+      <div class="unlinked-state">
+        <h3>Not connected to CommSession</h3>
+        <p>Track approvals, comments, and version history for this document.</p>
+        <button class="btn btn-primary" onclick="createMessage()">
+          Create Message in CommSession
+        </button>
+      </div>
+    </div>
+
+    <!-- Linked State -->
+    <div id="linked-state" style="display: none;">
+      <div class="card">
+        <h3 id="message-title">Loading...</h3>
+        <p id="plan-name"></p>
+        <div>
+          <span id="status-badge" class="status-badge">Draft</span>
+        </div>
+        <p id="sync-time" class="sync-indicator"></p>
+      </div>
+
+      <hr class="divider">
+
+      <div>
+        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">👥 Approvers</h4>
+        <div class="approvers-list" id="approvers">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <p id="comment-count" style="margin: 12px 0; font-size: 13px; color: #6B7280;"></p>
+
+      <hr class="divider">
+
+      <div id="changes-indicator" style="display: none;">
+        <div class="changes-banner">
+          🔄 Changes detected
+        </div>
+        <button class="btn btn-secondary" onclick="syncChanges()">
+          Sync Changes
+        </button>
+      </div>
+
+      <button class="btn btn-primary" onclick="openInCommSession()">
+        📋 Open in CommSession
+      </button>
+
+      <button class="btn btn-secondary" onclick="submitForReview()">
+        ✅ Submit for Review
+      </button>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" style="display: none;">
+      <div class="error-message" id="error-message"></div>
+      <button class="btn btn-secondary" onclick="retryLoad()">
+        Retry
+      </button>
     </div>
   </div>
 
   <script>
-    // State
-    let state = {
-      status: null,
-      loading: true,
-      error: null
-    };
+    let currentState = null;
+    let pollingInterval = null;
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', init);
+
+    function init() {
       loadStatus();
-    });
+      // Start polling every 30 seconds
+      pollingInterval = setInterval(loadStatus, 30000);
+    }
 
-    // Load document status
     function loadStatus() {
-      setState({ loading: true, error: null });
-
       google.script.run
-        .withSuccessHandler(function(status) {
-          setState({ status: status, loading: false });
-          render();
-        })
-        .withFailureHandler(function(error) {
-          setState({ error: error.message, loading: false });
-          render();
-        })
-        .getDocumentStatus();
+        .withSuccessHandler(handleStatusLoaded)
+        .withFailureHandler(handleError)
+        .loadStatus();
     }
 
-    // Sync to CommSession
-    function syncToCommSession() {
-      setState({ loading: true, error: null });
+    function handleStatusLoaded(status) {
+      currentState = status;
+
+      hideAllStates();
+
+      if (status.state === 'unlinked') {
+        showUnlinkedState(status);
+      } else if (status.state === 'linked') {
+        showLinkedState(status);
+      } else if (status.state === 'auth_required') {
+        showUnlinkedState(status);
+      } else if (status.state === 'error') {
+        showErrorState(status.error);
+      }
+    }
+
+    function hideAllStates() {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('unlinked-state').style.display = 'none';
+      document.getElementById('linked-state').style.display = 'none';
+      document.getElementById('error-state').style.display = 'none';
+    }
+
+    function showUnlinkedState(status) {
+      document.getElementById('unlinked-state').style.display = 'block';
+    }
+
+    function showLinkedState(status) {
+      document.getElementById('linked-state').style.display = 'block';
+
+      // Update title and plan
+      document.getElementById('message-title').textContent = status.title;
+      document.getElementById('plan-name').textContent = `Plan: ${status.planName}`;
+
+      // Update status badge
+      const statusBadge = document.getElementById('status-badge');
+      statusBadge.textContent = getStatusText(status.status);
+      statusBadge.className = 'status-badge status-' + status.status;
+
+      // Update sync time
+      document.getElementById('sync-time').innerHTML =
+        `✅ Synced ${formatTimeAgo(status.lastSyncedAt)}`;
+
+      // Update approvers
+      const approversList = document.getElementById('approvers');
+      approversList.innerHTML = '';
+
+      const maxVisible = 2;
+      status.approvers.slice(0, maxVisible).forEach(approver => {
+        const div = document.createElement('div');
+        div.className = 'approver-item';
+        div.innerHTML = `
+          <div>
+            <div class="approver-name">${approver.name}</div>
+            ${approver.role ? `<div class="approver-role">${approver.role}</div>` : ''}
+          </div>
+          <span>${getStatusEmoji(approver.status)}</span>
+        `;
+        approversList.appendChild(div);
+      });
+
+      if (status.approvers.length > maxVisible) {
+        const remaining = status.approvers.length - maxVisible;
+        const div = document.createElement('div');
+        div.style.paddingTop = '8px';
+        div.style.fontSize = '12px';
+        div.style.color = '#6B7280';
+        div.textContent = `+${remaining} more...`;
+        approversList.appendChild(div);
+      }
+
+      // Update comment count
+      document.getElementById('comment-count').textContent =
+        `💬 Comments (${status.commentCount})`;
+
+      // Show/hide changes indicator
+      if (status.hasChanges) {
+        document.getElementById('changes-indicator').style.display = 'block';
+      } else {
+        document.getElementById('changes-indicator').style.display = 'none';
+      }
+    }
+
+    function showErrorState(error) {
+      document.getElementById('error-state').style.display = 'block';
+      document.getElementById('error-message').textContent = error;
+    }
+
+    function createMessage() {
+      google.script.run
+        .withFailureHandler(handleError)
+        .openCreateMessage();
+    }
+
+    function syncChanges() {
+      // Disable button during sync
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Syncing...';
 
       google.script.run
-        .withSuccessHandler(function(result) {
+        .withSuccessHandler(result => {
+          btn.disabled = false;
+          btn.textContent = 'Sync Changes';
+
           if (result.success) {
-            showSuccess('Document synced successfully!');
+            alert('Changes synced successfully!');
+            loadStatus(); // Refresh
+          } else if (result.error === 'AUTH_EXPIRED') {
+            alert('Your session has expired. Please reconnect to CommSession.');
             loadStatus();
           } else {
-            setState({ error: result.error, loading: false });
-            render();
+            alert('Sync failed: ' + (result.error || 'Unknown error'));
           }
         })
-        .withFailureHandler(function(error) {
-          setState({ error: error.message, loading: false });
-          render();
+        .withFailureHandler(error => {
+          btn.disabled = false;
+          btn.textContent = 'Sync Changes';
+          handleError(error);
         })
-        .syncToCommSession();
+        .performSync();
     }
 
-    // Open in CommSession
     function openInCommSession() {
-      google.script.run
-        .withSuccessHandler(function(result) {
-          if (result.success) {
-            window.open(result.url, '_blank');
-          } else {
-            showError(result.error);
-          }
-        })
-        .withFailureHandler(function(error) {
-          showError(error.message);
-        })
-        .openInCommSession();
+      if (currentState && currentState.webAppUrl) {
+        google.script.run
+          .withFailureHandler(handleError)
+          .openMessageInCommSession(currentState.webAppUrl);
+      }
     }
 
-    // Unlink document
-    function unlinkDocument() {
-      if (!confirm('Are you sure you want to unlink this document from CommSession?')) {
+    function submitForReview() {
+      if (!confirm('Submit for review?\n\nThis will:\n• Sync latest changes\n• Notify approvers\n• Mark message as "In Review"')) {
         return;
       }
 
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
       google.script.run
-        .withSuccessHandler(function(result) {
+        .withSuccessHandler(result => {
+          btn.disabled = false;
+          btn.textContent = 'Submit for Review';
+
           if (result.success) {
-            showSuccess('Document unlinked successfully');
+            const approverNames = result.notifiedApprovers.join(', ');
+            alert(`✅ Submitted for Review\n\nNotified: ${approverNames}`);
+            loadStatus(); // Refresh
+          } else if (result.error === 'AUTH_EXPIRED') {
+            alert('Your session has expired. Please reconnect to CommSession.');
             loadStatus();
           } else {
-            showError(result.error);
+            alert('Submit failed: ' + (result.error || 'Unknown error'));
           }
         })
-        .withFailureHandler(function(error) {
-          showError(error.message);
+        .withFailureHandler(error => {
+          btn.disabled = false;
+          btn.textContent = 'Submit for Review';
+          handleError(error);
         })
-        .unlinkDocument();
+        .performSubmit();
     }
 
-    // State management
-    function setState(updates) {
-      state = { ...state, ...updates };
+    function retryLoad() {
+      hideAllStates();
+      document.getElementById('loading-state').style.display = 'block';
+      loadStatus();
     }
 
-    function showError(message) {
-      setState({ error: message });
-      render();
-    }
-
-    function showSuccess(message) {
-      setState({ error: null });
-      render();
-      // Could add a success message display here
-    }
-
-    // Render UI
-    function render() {
-      const app = document.getElementById('app');
-
-      if (state.loading) {
-        app.innerHTML = `
-          <div class="loading">
-            <div class="spinner"></div>
-            <p style="margin-top: 12px;">Loading...</p>
-          </div>
-        `;
-        return;
-      }
-
-      if (state.error) {
-        app.innerHTML = `
-          <div class="error">${escapeHtml(state.error)}</div>
-          ${renderContent()}
-        `;
-        return;
-      }
-
-      app.innerHTML = renderContent();
-    }
-
-    function renderContent() {
-      const { status } = state;
-
-      if (!status) {
-        return renderEmptyState();
-      }
-
-      if (!status.linked) {
-        return renderUnlinkedState(status);
-      }
-
-      return renderLinkedState(status);
-    }
-
-    function renderEmptyState() {
-      return `
-        <div class="header">
-          <div class="logo">CS</div>
-          <div class="title">CommSession</div>
-        </div>
-        <div class="empty-state">
-          <div class="empty-state-icon">📄</div>
-          <div class="empty-state-title">Unable to load document</div>
-          <div class="empty-state-text">Please try refreshing the sidebar.</div>
-        </div>
-        <button class="button button-secondary" onclick="loadStatus()">Refresh</button>
-      `;
-    }
-
-    function renderUnlinkedState(status) {
-      return `
-        <div class="header">
-          <div class="logo">CS</div>
-          <div class="title">CommSession</div>
-        </div>
-
-        <div class="empty-state">
-          <div class="empty-state-icon">🔗</div>
-          <div class="empty-state-title">Not linked to CommSession</div>
-          <div class="empty-state-text">
-            Sync this document to CommSession to start tracking approvals and governance.
-          </div>
-        </div>
-
-        <div class="stats">
-          <div class="stat-item">
-            <div class="stat-value">${status.documentName ? status.documentName.length : 0}</div>
-            <div class="stat-label">Characters</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">0</div>
-            <div class="stat-label">Watchers</div>
-          </div>
-        </div>
-
-        <button class="button button-primary" onclick="syncToCommSession()">
-          Sync to CommSession
-        </button>
-      `;
-    }
-
-    function renderLinkedState(status) {
-      const statusClass = (status.status && status.status.status) ? status.status.status.toLowerCase() : 'draft';
-      const statusText = formatStatus((status.status && status.status.status) ? status.status.status : 'Draft');
-      const lastSync = status.lastSync || 'Never';
-
-      return `
-        <div class="header">
-          <div class="logo">CS</div>
-          <div class="title">CommSession</div>
-        </div>
-
-        <div class="status-section">
-          <div class="section-title">Status</div>
-          <div class="status-card">
-            <div class="status-badge ${statusClass}">${statusText}</div>
-            <div class="info-row">
-              <span class="info-label">Last Sync</span>
-              <span class="info-value">${escapeHtml(formatDate(lastSync))}</span>
-            </div>
-            ${status.status && status.status.workflowStage ? `
-              <div class="info-row">
-                <span class="info-label">Workflow Stage</span>
-                <span class="info-value">${escapeHtml(status.status.workflowStage)}</span>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-
-        <button class="button button-primary" onclick="syncToCommSession()">
-          Sync Changes
-        </button>
-
-        <button class="button button-secondary" onclick="openInCommSession()">
-          Open in CommSession →
-        </button>
-
-        <div class="divider"></div>
-
-        <button class="button button-danger" onclick="unlinkDocument()">
-          Unlink Document
-        </button>
-      `;
-    }
-
-    // Utility functions
-    function escapeHtml(text) {
-      if (!text) return '';
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function formatStatus(status) {
-      const statusMap = {
-        'draft': 'Draft',
-        'active': 'Under Review',
-        'in_review': 'Under Review',
-        'approved': 'Approved',
-        'rejected': 'Rejected',
-        'paused': 'Paused',
-        'cancelled': 'Cancelled',
-        'published': 'Published'
+    function getStatusEmoji(status) {
+      const emojis = {
+        'pending': '⏳',
+        'approved': '✅',
+        'changes_requested': '🔄',
+        'rejected': '❌'
       };
-      return statusMap[status.toLowerCase()] || status;
+      return emojis[status] || '⏳';
     }
 
-    function formatDate(dateString) {
-      if (!dateString || dateString === 'Never') return 'Never';
+    function getStatusText(status) {
+      const texts = {
+        'draft': 'Draft',
+        'in_review': 'In Review',
+        'approved': 'Approved',
+        'changes_requested': 'Changes Requested',
+        'rejected': 'Rejected'
+      };
+      return texts[status] || status;
+    }
 
-      try {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
+    function formatTimeAgo(timestamp) {
+      if (!timestamp) return 'never';
 
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins} min${diffMins === 1 ? '' : 's'} ago`;
-        if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-        if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+      const now = new Date();
+      const then = new Date(timestamp);
+      const diffMs = now - then;
+      const diffMins = Math.floor(diffMs / 1000 / 60);
 
-        return date.toLocaleDateString();
-      } catch (e) {
-        return dateString;
-      }
+      if (diffMins < 1) return 'just now';
+      if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    }
+
+    function handleError(error) {
+      console.error('Error:', error);
+      showErrorState(error.message || 'An unexpected error occurred');
     }
   </script>
 </body>
