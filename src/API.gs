@@ -4,8 +4,8 @@
  */
 
 // API Configuration
-var COMMSESSION_API_URL = 'https://api.commsession.com';  // Production
-// var COMMSESSION_API_URL = 'http://localhost:5000';     // Development
+var COMMSESSION_API_URL = 'https://app.commsession.com/api/v2';  // Production
+// var COMMSESSION_API_URL = 'http://localhost:5173/api/v2';     // Development
 
 /**
  * Gets the CommSession web app URL
@@ -103,70 +103,104 @@ function makeApiRequest(endpoint, method, payload) {
  * Gets message status from CommSession
  */
 function getMessageStatus(messageId) {
-  var result = makeApiRequest('/api/v1/messages/' + messageId, 'GET');
+  var result = makeApiRequest('/messages/' + messageId + '/status', 'GET');
 
   if (result.success) {
     return {
-      id: result.data.id,
-      subject: result.data.subject,
+      messageId: result.data.messageId,
+      title: result.data.title,
+      planName: result.data.planName,
       status: result.data.status,
-      workflowStage: result.data.workflowStage,
-      updatedAt: result.data.updatedAt,
-      approvers: result.data.approvers || []
+      approvers: result.data.approvers || [],
+      commentCount: result.data.commentCount || 0,
+      lastSyncedAt: result.data.lastSyncedAt,
+      webAppUrl: result.data.webAppUrl
     };
   } else {
+    if (result.error && result.error.indexOf('404') !== -1) {
+      return null; // Message not found
+    }
     throw new Error(result.error);
   }
 }
 
 /**
- * Gets remote content hash for conflict detection
+ * Checks if document is already linked to a message
  */
-function getRemoteContentHash(messageId) {
-  var result = makeApiRequest('/api/v1/messages/' + messageId + '/hash', 'GET');
+function checkDocumentLinked(documentId) {
+  var result = makeApiRequest('/documents/google/' + documentId, 'GET');
 
   if (result.success) {
-    return result.data.contentHash;
+    return {
+      linked: result.data.linked,
+      messageId: result.data.messageId
+    };
   } else {
-    Logger.log('Failed to get remote hash: ' + result.error);
-    return null;
+    return {
+      linked: false,
+      messageId: null
+    };
+  }
+}
+
+/**
+ * Links document to an existing message
+ */
+function linkDocumentToMessage(messageId, documentId, documentUrl, contentHash) {
+  var payload = {
+    documentId: documentId,
+    documentUrl: documentUrl,
+    platform: 'google_docs',
+    contentHash: contentHash
+  };
+
+  var result = makeApiRequest('/messages/' + messageId + '/link-document', 'POST', payload);
+
+  if (result.success) {
+    return {
+      success: true,
+      document: result.data.document
+    };
+  } else {
+    return {
+      success: false,
+      error: result.error,
+      existingMessageId: result.data && result.data.existingMessageId
+    };
   }
 }
 
 /**
  * Syncs content to CommSession
  */
-function syncContent(messageId, content, contentHash) {
+function syncContent(messageId) {
   var doc = DocumentApp.getActiveDocument();
+  var body = doc.getBody();
+  var text = body.getText();
+  var title = doc.getName();
+  var wordCount = text.split(/\s+/).filter(function(word) { return word.length > 0; }).length;
+  var contentHash = calculateFingerprint(text + '\n' + title);
 
   var payload = {
-    content: content,
-    contentHash: contentHash,
-    source: 'google-docs',
-    documentId: doc.getId(),
-    documentName: doc.getName()
+    content: {
+      text: text
+    },
+    metadata: {
+      title: title,
+      lastModified: new Date().toISOString(),
+      wordCount: wordCount,
+      contentHash: contentHash
+    }
   };
 
-  var endpoint, method;
-
-  if (messageId) {
-    // Update existing message
-    endpoint = '/api/v1/messages/' + messageId;
-    method = 'PATCH';
-  } else {
-    // Create new message
-    endpoint = '/api/v1/messages';
-    method = 'POST';
-    payload.subject = doc.getName();
-  }
-
-  var result = makeApiRequest(endpoint, method, payload);
+  var result = makeApiRequest('/messages/' + messageId + '/sync', 'POST', payload);
 
   if (result.success) {
     return {
       success: true,
-      messageId: result.data.id,
-      url: getCommSessionUrl() + '/messages/' + result.data.id
+      versionId: result.data.versionId,
+      syncedAt: result.data.syncedAt,
+      contentHash: contentHash
     };
   } else {
     return {
@@ -177,71 +211,25 @@ function syncContent(messageId, content, contentHash) {
 }
 
 /**
- * Creates a new message in CommSession
+ * Submits message for review
  */
-function createMessage(subject, content, contentHash) {
-  var doc = DocumentApp.getActiveDocument();
-
+function submitForReview(messageId, syncFirst) {
   var payload = {
-    subject: subject,
-    content: content,
-    contentHash: contentHash,
-    source: 'google-docs',
-    documentId: doc.getId(),
-    documentName: doc.getName(),
-    status: 'draft'
+    syncFirst: syncFirst !== false // Default to true
   };
 
-  var result = makeApiRequest('/api/v1/messages', 'POST', payload);
+  var result = makeApiRequest('/messages/' + messageId + '/submit', 'POST', payload);
 
   if (result.success) {
     return {
       success: true,
-      messageId: result.data.id,
-      url: getCommSessionUrl() + '/messages/' + result.data.id
+      message: result.data.message,
+      notifiedApprovers: result.data.notifiedApprovers || []
     };
   } else {
     return {
       success: false,
       error: result.error
     };
-  }
-}
-
-/**
- * Updates an existing message in CommSession
- */
-function updateMessage(messageId, content, contentHash) {
-  var payload = {
-    content: content,
-    contentHash: contentHash,
-    lastModified: new Date().toISOString()
-  };
-
-  var result = makeApiRequest('/api/v1/messages/' + messageId, 'PATCH', payload);
-
-  if (result.success) {
-    return {
-      success: true,
-      messageId: result.data.id
-    };
-  } else {
-    return {
-      success: false,
-      error: result.error
-    };
-  }
-}
-
-/**
- * Gets all messages for current user
- */
-function getMyMessages() {
-  var result = makeApiRequest('/api/v1/messages', 'GET');
-
-  if (result.success) {
-    return result.data;
-  } else {
-    throw new Error(result.error);
   }
 }

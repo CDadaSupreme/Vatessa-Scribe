@@ -4,6 +4,21 @@
  */
 
 /**
+ * Generates SHA-256 hash of current document content
+ * Combines title + text for complete content fingerprint
+ */
+function generateContentHash() {
+  var doc = DocumentApp.getActiveDocument();
+  var title = doc.getName();
+  var text = doc.getBody().getText();
+
+  // Combine title + text for hash
+  var content = title + '\n' + text;
+
+  return calculateFingerprint(content);
+}
+
+/**
  * Calculates SHA-256 hash of content
  * Uses Google's Utilities.computeDigest for secure hashing
  */
@@ -36,7 +51,7 @@ function calculateFingerprint(content) {
     hashString += byteString;
   }
 
-  return hashString;
+  return 'sha256:' + hashString;
 }
 
 /**
