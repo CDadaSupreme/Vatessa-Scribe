@@ -4,210 +4,81 @@
  */
 
 // API Configuration
-var COMMSESSION_API_URL = 'https://app.commsession.com/api/v2';  // Production
-// var COMMSESSION_API_URL = 'http://localhost:5173/api/v2';     // Development
+var API_BASE = 'https://app.commsession.com/api/v2';
+// var API_BASE = 'http://localhost:5173/api/v2';  // Development
 
 /**
- * Gets the CommSession web app URL
+ * Makes an authenticated API call to CommSession
  */
-function getCommSessionUrl() {
-  return 'https://app.commsession.com';
-  // return 'http://localhost:5173'; // Development
-}
-
-/**
- * Gets the auth token (placeholder - implement based on your auth strategy)
- * Options:
- * 1. Store in user properties after OAuth flow
- * 2. Prompt user to enter API key
- * 3. Use service account token
- */
-function getAuthToken() {
-  var userProperties = PropertiesService.getUserProperties();
-  var token = userProperties.getProperty('COMMSESSION_AUTH_TOKEN');
+function makeAPICall(endpoint, method, payload) {
+  var token = getAuthToken();
 
   if (!token) {
-    // Prompt user for token or initiate OAuth flow
-    throw new Error('Not authenticated. Please configure your CommSession credentials.');
+    throw new Error('AUTH_REQUIRED');
   }
 
-  return token;
-}
-
-/**
- * Sets the auth token
- */
-function setAuthToken(token) {
-  var userProperties = PropertiesService.getUserProperties();
-  userProperties.setProperty('COMMSESSION_AUTH_TOKEN', token);
-}
-
-/**
- * Makes an API request to CommSession
- */
-function makeApiRequest(endpoint, method, payload) {
-  method = method || 'GET';
-
   var options = {
-    method: method,
+    method: method.toLowerCase(),
     headers: {
+      'Authorization': 'Bearer ' + token,
       'Content-Type': 'application/json'
     },
     muteHttpExceptions: true
   };
 
-  // Add auth token if available
-  try {
-    var token = getAuthToken();
-    options.headers['Authorization'] = 'Bearer ' + token;
-  } catch (e) {
-    Logger.log('No auth token available');
-  }
-
-  // Add payload for POST/PUT/PATCH
   if (payload && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
     options.payload = JSON.stringify(payload);
   }
 
-  var url = COMMSESSION_API_URL + endpoint;
-  Logger.log('API Request: ' + method + ' ' + url);
-
   try {
-    var response = UrlFetchApp.fetch(url, options);
-    var responseCode = response.getResponseCode();
-    var responseBody = response.getContentText();
+    var response = UrlFetchApp.fetch(API_BASE + endpoint, options);
+    var statusCode = response.getResponseCode();
+    var responseText = response.getContentText();
 
-    Logger.log('API Response: ' + responseCode);
-
-    if (responseCode >= 200 && responseCode < 300) {
-      return {
-        success: true,
-        data: JSON.parse(responseBody)
-      };
-    } else {
-      return {
-        success: false,
-        error: 'API request failed: ' + responseCode + ' - ' + responseBody
-      };
+    // Handle auth errors
+    if (statusCode === 401) {
+      clearAuthToken();
+      throw new Error('AUTH_EXPIRED');
     }
+
+    // Handle not found
+    if (statusCode === 404) {
+      return { error: 'NOT_FOUND', statusCode: 404 };
+    }
+
+    // Handle other errors
+    if (statusCode >= 400) {
+      var errorData = JSON.parse(responseText);
+      throw new Error(errorData.error || 'API_ERROR');
+    }
+
+    return JSON.parse(responseText);
+
   } catch (error) {
-    Logger.log('API Error: ' + error.toString());
-    return {
-      success: false,
-      error: 'Network error: ' + error.toString()
-    };
-  }
-}
-
-/**
- * Gets message status from CommSession
- */
-function getMessageStatus(messageId) {
-  var result = makeApiRequest('/messages/' + messageId + '/status', 'GET');
-
-  if (result.success) {
-    return {
-      messageId: result.data.messageId,
-      title: result.data.title,
-      planName: result.data.planName,
-      status: result.data.status,
-      approvers: result.data.approvers || [],
-      commentCount: result.data.commentCount || 0,
-      lastSyncedAt: result.data.lastSyncedAt,
-      webAppUrl: result.data.webAppUrl
-    };
-  } else {
-    if (result.error && result.error.indexOf('404') !== -1) {
-      return null; // Message not found
-    }
-    throw new Error(result.error);
+    Logger.log('API Error: ' + error.message);
+    throw error;
   }
 }
 
 /**
  * Checks if document is already linked to a message
  */
-function checkDocumentLinked(documentId) {
-  var result = makeApiRequest('/documents/google/' + documentId, 'GET');
-
-  if (result.success) {
-    return {
-      linked: result.data.linked,
-      messageId: result.data.messageId
-    };
-  } else {
-    return {
-      linked: false,
-      messageId: null
-    };
-  }
-}
-
-/**
- * Links document to an existing message
- */
-function linkDocumentToMessage(messageId, documentId, documentUrl, contentHash) {
-  var payload = {
-    documentId: documentId,
-    documentUrl: documentUrl,
-    platform: 'google_docs',
-    contentHash: contentHash
-  };
-
-  var result = makeApiRequest('/messages/' + messageId + '/link-document', 'POST', payload);
-
-  if (result.success) {
-    return {
-      success: true,
-      document: result.data.document
-    };
-  } else {
-    return {
-      success: false,
-      error: result.error,
-      existingMessageId: result.data && result.data.existingMessageId
-    };
-  }
-}
-
-/**
- * Syncs content to CommSession
- */
-function syncContent(messageId) {
-  var doc = DocumentApp.getActiveDocument();
-  var body = doc.getBody();
-  var text = body.getText();
-  var title = doc.getName();
-  var wordCount = text.split(/\s+/).filter(function(word) { return word.length > 0; }).length;
-  var contentHash = calculateFingerprint(text + '\n' + title);
-
-  var payload = {
-    content: {
-      text: text
-    },
-    metadata: {
-      title: title,
-      lastModified: new Date().toISOString(),
-      wordCount: wordCount,
-      contentHash: contentHash
+function checkDocumentLinked(docId) {
+  try {
+    return makeAPICall('/documents/google/' + docId, 'GET');
+  } catch (error) {
+    if (error.message === 'AUTH_REQUIRED' || error.message === 'AUTH_EXPIRED') {
+      return { linked: false, authRequired: true };
     }
-  };
-
-  var result = makeApiRequest('/messages/' + messageId + '/sync', 'POST', payload);
-
-  if (result.success) {
-    return {
-      success: true,
-      versionId: result.data.versionId,
-      syncedAt: result.data.syncedAt,
-      contentHash: contentHash
-    };
-  } else {
-    return {
-      success: false,
-      error: result.error
-    };
+    throw error;
   }
+}
+
+/**
+ * Gets message status for sidebar display
+ */
+function getMessageStatus(messageId) {
+  return makeAPICall('/messages/' + messageId + '/status', 'GET');
 }
 
 /**
@@ -218,18 +89,28 @@ function submitForReview(messageId, syncFirst) {
     syncFirst: syncFirst !== false // Default to true
   };
 
-  var result = makeApiRequest('/messages/' + messageId + '/submit', 'POST', payload);
+  return makeAPICall('/messages/' + messageId + '/submit', 'POST', payload);
+}
+
+/**
+ * Links document to CommSession message
+ */
+function linkDocument(messageId, docId, docUrl) {
+  var hash = generateContentHash();
+
+  var payload = {
+    documentId: docId,
+    documentUrl: docUrl,
+    platform: 'google_docs',
+    contentHash: hash
+  };
+
+  var result = makeAPICall('/messages/' + messageId + '/link-document', 'POST', payload);
 
   if (result.success) {
-    return {
-      success: true,
-      message: result.data.message,
-      notifiedApprovers: result.data.notifiedApprovers || []
-    };
-  } else {
-    return {
-      success: false,
-      error: result.error
-    };
+    setStoredMessageId(messageId);
+    setStoredHash(hash);
   }
+
+  return result;
 }

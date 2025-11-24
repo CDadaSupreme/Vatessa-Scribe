@@ -4,59 +4,70 @@
  */
 
 /**
- * Formats a date for display
+ * Formats timestamp for display
  */
-function formatDate(dateString) {
-  if (!dateString) {
-    return 'Never';
-  }
+function formatTimeAgo(timestamp) {
+  if (!timestamp) return 'Never';
 
   try {
-    var date = new Date(dateString);
     var now = new Date();
-    var diffMs = now - date;
-    var diffMins = Math.floor(diffMs / 60000);
-    var diffHours = Math.floor(diffMs / 3600000);
-    var diffDays = Math.floor(diffMs / 86400000);
+    var then = new Date(timestamp);
+    var diffMs = now - then;
+    var diffMins = Math.floor(diffMs / 1000 / 60);
 
-    if (diffMins < 1) {
-      return 'Just now';
-    } else if (diffMins < 60) {
-      return diffMins + ' min' + (diffMins === 1 ? '' : 's') + ' ago';
-    } else if (diffHours < 24) {
-      return diffHours + ' hour' + (diffHours === 1 ? '' : 's') + ' ago';
-    } else if (diffDays < 7) {
-      return diffDays + ' day' + (diffDays === 1 ? '' : 's') + ' ago';
-    } else {
-      return Utilities.formatDate(date, Session.getScriptTimeZone(), 'MMM d, yyyy');
-    }
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return diffMins + ' minute' + (diffMins > 1 ? 's' : '') + ' ago';
+
+    var diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return diffHours + ' hour' + (diffHours > 1 ? 's' : '') + ' ago';
+
+    var diffDays = Math.floor(diffHours / 24);
+    return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
   } catch (e) {
     Logger.log('Date formatting error: ' + e.toString());
-    return dateString;
+    return timestamp;
   }
 }
 
 /**
- * Formats workflow status for display
+ * Formats a date for display (alias for backward compatibility)
+ */
+function formatDate(dateString) {
+  return formatTimeAgo(dateString);
+}
+
+/**
+ * Gets emoji for approval status
+ */
+function getStatusEmoji(status) {
+  var emojis = {
+    'pending': '⏳',
+    'approved': '✅',
+    'changes_requested': '🔄',
+    'rejected': '❌'
+  };
+  return emojis[status] || '⏳';
+}
+
+/**
+ * Gets display text for message status
+ */
+function getStatusText(status) {
+  var texts = {
+    'draft': 'Draft',
+    'in_review': 'In Review',
+    'approved': 'Approved',
+    'changes_requested': 'Changes Requested',
+    'rejected': 'Rejected'
+  };
+  return texts[status] || status;
+}
+
+/**
+ * Formats workflow status for display (alias for backward compatibility)
  */
 function formatStatus(status) {
-  if (!status) {
-    return 'Unknown';
-  }
-
-  // Map internal status to display status
-  var statusMap = {
-    'draft': 'Draft',
-    'active': 'Under Review',
-    'in_review': 'Under Review',
-    'approved': 'Approved',
-    'rejected': 'Rejected',
-    'paused': 'Paused',
-    'cancelled': 'Cancelled',
-    'published': 'Published'
-  };
-
-  return statusMap[status.toLowerCase()] || status;
+  return getStatusText(status);
 }
 
 /**
@@ -281,4 +292,36 @@ function retryWithBackoff(func, maxRetries, initialDelay) {
       delay *= 2; // Exponential backoff
     }
   }
+}
+
+/**
+ * Opens CommSession web app for creating a new message
+ */
+function openCreateMessage() {
+  var doc = DocumentApp.getActiveDocument();
+  var docId = doc.getId();
+  var url = 'https://app.commsession.com/messages/new?source=google_docs&docId=' + docId;
+
+  var html = HtmlService.createHtmlOutput(
+    '<script>' +
+    'window.open("' + url + '", "_blank");' +
+    'google.script.host.close();' +
+    '</script>'
+  );
+
+  DocumentApp.getUi().showModalDialog(html, 'Opening CommSession...');
+}
+
+/**
+ * Opens CommSession web app for this message
+ */
+function openMessageInCommSession(webAppUrl) {
+  var html = HtmlService.createHtmlOutput(
+    '<script>' +
+    'window.open("' + webAppUrl + '", "_blank");' +
+    'google.script.host.close();' +
+    '</script>'
+  );
+
+  DocumentApp.getUi().showModalDialog(html, 'Opening CommSession...');
 }
