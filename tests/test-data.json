@@ -1,0 +1,182 @@
+{
+  "mockDocuments": [
+    {
+      "id": "1abc_test_document_draft",
+      "name": "Q4 Communication Plan - Draft",
+      "content": "This is a draft communication plan for Q4.\n\nKey Initiatives:\n- Product launch\n- Holiday campaigns\n- Year-end recap",
+      "linked": false,
+      "properties": {}
+    },
+    {
+      "id": "2def_test_document_review",
+      "name": "Executive Update - Under Review",
+      "content": "Executive team update for November 2025.\n\nHighlights:\n- Revenue growth 15%\n- New market expansion\n- Team updates",
+      "linked": true,
+      "properties": {
+        "COMMSESSION_MESSAGE_ID": "msg_123456",
+        "COMMSESSION_LAST_SYNC": "2025-11-23T10:30:00Z",
+        "COMMSESSION_CONTENT_HASH": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890"
+      }
+    },
+    {
+      "id": "3ghi_test_document_approved",
+      "name": "Press Release - Approved",
+      "content": "FOR IMMEDIATE RELEASE\n\nCommSession Announces Major Product Updates\n\nSAN FRANCISCO, CA - CommSession today announced...",
+      "linked": true,
+      "properties": {
+        "COMMSESSION_MESSAGE_ID": "msg_789012",
+        "COMMSESSION_LAST_SYNC": "2025-11-22T14:15:00Z",
+        "COMMSESSION_CONTENT_HASH": "b2c3d4e5f6789012345678901234567890123456789012345678901234567890ab"
+      }
+    }
+  ],
+  "mockMessages": [
+    {
+      "id": "msg_123456",
+      "subject": "Executive Update - Under Review",
+      "content": "Executive team update for November 2025.\n\nHighlights:\n- Revenue growth 15%\n- New market expansion\n- Team updates",
+      "status": "active",
+      "workflowStage": "Legal Review",
+      "contentHash": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890",
+      "createdAt": "2025-11-20T09:00:00Z",
+      "updatedAt": "2025-11-23T10:30:00Z",
+      "approvers": [
+        {
+          "id": "user_1",
+          "name": "Sarah Johnson",
+          "email": "sarah@commsession.com",
+          "role": "Legal",
+          "status": "pending"
+        },
+        {
+          "id": "user_2",
+          "name": "Mike Chen",
+          "email": "mike@commsession.com",
+          "role": "Executive",
+          "status": "approved"
+        }
+      ],
+      "watchers": [
+        {
+          "id": "user_3",
+          "name": "Emily Davis",
+          "email": "emily@commsession.com"
+        }
+      ]
+    },
+    {
+      "id": "msg_789012",
+      "subject": "Press Release - Approved",
+      "content": "FOR IMMEDIATE RELEASE\n\nCommSession Announces Major Product Updates\n\nSAN FRANCISCO, CA - CommSession today announced...",
+      "status": "approved",
+      "workflowStage": "Approved",
+      "contentHash": "b2c3d4e5f6789012345678901234567890123456789012345678901234567890ab",
+      "createdAt": "2025-11-18T08:00:00Z",
+      "updatedAt": "2025-11-22T14:15:00Z",
+      "approvers": [
+        {
+          "id": "user_1",
+          "name": "Sarah Johnson",
+          "email": "sarah@commsession.com",
+          "role": "Legal",
+          "status": "approved"
+        },
+        {
+          "id": "user_2",
+          "name": "Mike Chen",
+          "email": "mike@commsession.com",
+          "role": "Executive",
+          "status": "approved"
+        },
+        {
+          "id": "user_4",
+          "name": "Alex Rivera",
+          "email": "alex@commsession.com",
+          "role": "PR",
+          "status": "approved"
+        }
+      ],
+      "watchers": []
+    }
+  ],
+  "mockApiResponses": {
+    "getMessageStatus_success": {
+      "id": "msg_123456",
+      "subject": "Executive Update - Under Review",
+      "status": "active",
+      "workflowStage": "Legal Review",
+      "updatedAt": "2025-11-23T10:30:00Z",
+      "approvers": [
+        {
+          "id": "user_1",
+          "name": "Sarah Johnson",
+          "email": "sarah@commsession.com",
+          "role": "Legal",
+          "status": "pending"
+        }
+      ]
+    },
+    "getMessageStatus_notFound": {
+      "error": "Message not found",
+      "code": 404
+    },
+    "syncContent_create_success": {
+      "id": "msg_new_001",
+      "subject": "New Document",
+      "status": "draft",
+      "createdAt": "2025-11-23T15:00:00Z",
+      "contentHash": "c3d4e5f6789012345678901234567890123456789012345678901234567890abcd"
+    },
+    "syncContent_update_success": {
+      "id": "msg_123456",
+      "subject": "Executive Update - Under Review",
+      "status": "active",
+      "updatedAt": "2025-11-23T15:05:00Z",
+      "contentHash": "d4e5f6789012345678901234567890123456789012345678901234567890abcde"
+    },
+    "syncContent_conflict": {
+      "error": "Content has been modified by another user",
+      "code": 409,
+      "details": {
+        "remoteHash": "e5f6789012345678901234567890123456789012345678901234567890abcdef",
+        "localHash": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890"
+      }
+    },
+    "auth_required": {
+      "error": "Authentication required",
+      "code": 401
+    }
+  },
+  "testScenarios": [
+    {
+      "name": "First time sync (unlinked document)",
+      "description": "User opens sidebar on document that's never been synced",
+      "expectedBehavior": "Show unlinked state with 'Sync to CommSession' button"
+    },
+    {
+      "name": "Sync linked document with local changes",
+      "description": "User makes changes and clicks 'Sync Changes'",
+      "expectedBehavior": "Content synced, hash updated, success message shown"
+    },
+    {
+      "name": "Detect conflict",
+      "description": "Document modified both locally and remotely",
+      "expectedBehavior": "Show conflict error, prevent overwrite"
+    },
+    {
+      "name": "Open in CommSession",
+      "description": "User clicks 'Open in CommSession' button",
+      "expectedBehavior": "New tab opens to CommSession web app at message URL"
+    },
+    {
+      "name": "Unlink document",
+      "description": "User clicks 'Unlink Document'",
+      "expectedBehavior": "Confirmation dialog, properties cleared, return to unlinked state"
+    },
+    {
+      "name": "View status of approved message",
+      "description": "User opens sidebar on approved document",
+      "expectedBehavior": "Show green 'Approved' badge, workflow stage, last sync time"
+    }
+  ]
+}
