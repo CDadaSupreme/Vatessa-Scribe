@@ -1,6 +1,6 @@
-# Deployment Guide - CommSession Google Docs Add-on
+# Deployment Guide - Vatessa Google Docs Add-on
 
-This guide covers deploying the CommSession Google Docs Add-on to Google Workspace Marketplace.
+This guide covers deploying the Vatessa Google Docs Add-on to Google Workspace Marketplace.
 
 ## Deployment Stages
 
@@ -51,8 +51,8 @@ Ensure all OAuth scopes are declared:
   ],
   "addOns": {
     "common": {
-      "name": "CommSession",
-      "logoUrl": "https://www.commsession.com/logo.png",
+      "name": "Vatessa",
+      "logoUrl": "https://www.vatessa.com/logo.png",
       "layoutProperties": {
         "primaryColor": "#4F46E5"
       }
@@ -67,8 +67,8 @@ Create the following assets:
 
 - **Logo (128x128 px)**: Square logo for add-on listing
 - **Screenshots (1280x800 px)**: 3-5 screenshots showing key features
-- **Privacy Policy**: Hosted at `https://www.commsession.com/privacy`
-- **Terms of Service**: Hosted at `https://www.commsession.com/terms`
+- **Privacy Policy**: Hosted at `https://www.vatessa.com/privacy`
+- **Terms of Service**: Hosted at `https://www.vatessa.com/terms`
 
 ---
 
@@ -77,7 +77,7 @@ Create the following assets:
 ### 2.1 Create Project
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create new project: "CommSession Google Docs Add-on"
+2. Create new project: "Vatessa Google Docs Add-on"
 3. Note the Project ID
 
 ### 2.2 Enable APIs
@@ -92,12 +92,12 @@ gcloud services enable drive.googleapis.com
 1. Navigate to **APIs & Services** → **OAuth consent screen**
 2. Choose **External** user type
 3. Fill in app information:
-   - App name: `CommSession`
-   - User support email: `support@commsession.com`
+   - App name: `Vatessa`
+   - User support email: `support@vatessa.com`
    - App logo: Upload 128x128 logo
-   - Application home page: `https://www.commsession.com`
-   - Privacy policy: `https://www.commsession.com/privacy`
-   - Terms of service: `https://www.commsession.com/terms`
+   - Application home page: `https://www.vatessa.com`
+   - Privacy policy: `https://www.vatessa.com/privacy`
+   - Terms of service: `https://www.vatessa.com/terms`
 4. Add scopes:
    - `https://www.googleapis.com/auth/documents.currentonly`
    - `https://www.googleapis.com/auth/script.container.ui`
@@ -158,9 +158,9 @@ Note the Deployment ID (e.g., `AKfycbz...`).
 ### 5.2 Verify Functionality
 
 - [ ] Sidebar loads correctly
-- [ ] Sync to CommSession works
+- [ ] Sync to Vatessa works
 - [ ] Status updates display
-- [ ] "Open in CommSession" link works
+- [ ] "Open in Vatessa" link works
 - [ ] Conflict detection works
 - [ ] No errors in Apps Script logs
 
@@ -177,8 +177,8 @@ Note the Deployment ID (e.g., `AKfycbz...`).
 ### 6.2 Fill Listing Information
 
 **Basic Information**:
-- App name: `CommSession`
-- Short description: `Sync Google Docs with CommSession for approval workflows`
+- App name: `Vatessa`
+- Short description: `Sync Google Docs with Vatessa for approval workflows`
 - Detailed description: (See template below)
 - Category: `Productivity`
 - Language: `English`
@@ -189,9 +189,9 @@ Note the Deployment ID (e.g., `AKfycbz...`).
 - Video URL: (Optional) Demo video
 
 **Support**:
-- Support email: `support@commsession.com`
-- Privacy policy: `https://www.commsession.com/privacy`
-- Terms of service: `https://www.commsession.com/terms`
+- Support email: `support@vatessa.com`
+- Privacy policy: `https://www.vatessa.com/privacy`
+- Terms of service: `https://www.vatessa.com/terms`
 
 **OAuth Configuration**:
 - Scopes: (Auto-populated from appsscript.json)
@@ -211,25 +211,25 @@ Note the Deployment ID (e.g., `AKfycbz...`).
 ## Detailed Description Template
 
 ```
-CommSession Google Docs Add-on
+Vatessa Google Docs Add-on
 
-Seamlessly connect your Google Docs drafts with the CommSession approval workflow platform.
+Seamlessly connect your Google Docs drafts with the Vatessa approval workflow platform.
 
 KEY FEATURES:
-• Sync document content to CommSession with one click
+• Sync document content to Vatessa with one click
 • View approval status directly in Google Docs
 • Smart conflict detection prevents content overwrites
-• Quick navigation to full CommSession interface
+• Quick navigation to full Vatessa interface
 
 HOW IT WORKS:
 1. Open your Google Doc
-2. Click Extensions → CommSession
-3. Sync your draft to CommSession
+2. Click Extensions → Vatessa
+3. Sync your draft to Vatessa
 4. View status updates in the sidebar
-5. Open in CommSession for full approval workflow management
+5. Open in Vatessa for full approval workflow management
 
-ABOUT COMMSESSION:
-CommSession is a communication governance platform that helps organizations manage approval workflows, stakeholder reviews, and compliance tracking for important communications.
+ABOUT VATESSA:
+Vatessa is a communication governance platform that helps organizations manage approval workflows, stakeholder reviews, and compliance tracking for important communications.
 
 PRIVACY & SECURITY:
 • Minimal OAuth scopes (documents.currentonly only)
@@ -238,11 +238,11 @@ PRIVACY & SECURITY:
 • All data remains in your Google account
 
 SUPPORT:
-Need help? Contact support@commsession.com
+Need help? Contact support@vatessa.com
 
 REQUIREMENTS:
 • Google Workspace account
-• CommSession account (sign up at commsession.com)
+• Vatessa account (sign up at vatessa.com)
 ```
 
 ---
@@ -342,8 +342,8 @@ clasp deploy --description "v1.0.1 - Hotfix: Critical bug"
 ## Contact
 
 For deployment questions, contact:
-- **Engineering**: dev@commsession.com
-- **Support**: support@commsession.com
+- **Engineering**: dev@vatessa.com
+- **Support**: support@vatessa.com
 
 ---
 

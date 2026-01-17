@@ -1,5 +1,5 @@
 /**
- * CommSession Google Docs Add-on
+ * Vatessa Google Docs Add-on
  * Main entry point and menu handlers
  */
 
@@ -16,7 +16,7 @@ function onInstall(e) {
 function onOpen(e) {
   DocumentApp.getUi()
     .createAddonMenu()
-    .addItem('Open CommSession', 'showSidebar')
+    .addItem('Open Vatessa', 'showSidebar')
     .addToUi();
 }
 
@@ -34,21 +34,21 @@ function createCard() {
   var card = CardService.newCardBuilder();
   card.setHeader(
     CardService.newCardHeader()
-      .setTitle('CommSession')
-      .setImageUrl('https://www.commsession.com/logo.png')
+      .setTitle('Vatessa')
+      .setImageUrl('https://www.vatessa.com/logo.png')
   );
 
   var section = CardService.newCardSection();
   section.addWidget(
     CardService.newTextParagraph()
-      .setText('Sync your document with CommSession to manage approvals and governance.')
+      .setText('Sync your document with Vatessa to manage approvals and governance.')
   );
 
   var syncButton = CardService.newTextButton()
-    .setText('Sync to CommSession')
+    .setText('Sync to Vatessa')
     .setOnClickAction(
       CardService.newAction()
-        .setFunctionName('syncToCommSession')
+        .setFunctionName('syncToVatessa')
     );
 
   section.addWidget(syncButton);
@@ -62,7 +62,7 @@ function createCard() {
  */
 function showSidebar() {
   var html = HtmlService.createHtmlOutputFromFile('Sidebar')
-    .setTitle('CommSession')
+    .setTitle('Vatessa')
     .setWidth(300);
   DocumentApp.getUi().showSidebar(html);
 }
@@ -90,9 +90,9 @@ function getDocumentStatus() {
       };
     }
 
-    var messageId = docProperties.getProperty('CS_MESSAGE_ID');
-    var lastSync = docProperties.getProperty('CS_LAST_SYNC');
-    var storedHash = docProperties.getProperty('CS_CONTENT_HASH');
+    var messageId = docProperties.getProperty('vatessa_message_id');
+    var lastSync = docProperties.getProperty('vatessa_last_sync');
+    var storedHash = docProperties.getProperty('vatessa_content_hash');
 
     // Check if user is authenticated
     var token = getAuthToken();
@@ -112,7 +112,7 @@ function getDocumentStatus() {
         if (checkResult.linked && checkResult.messageId) {
           // Document was linked but local properties were lost
           messageId = checkResult.messageId;
-          docProperties.setProperty('CS_MESSAGE_ID', messageId);
+          docProperties.setProperty('vatessa_message_id', messageId);
         } else {
           return {
             linked: false,
@@ -130,11 +130,11 @@ function getDocumentStatus() {
       }
     }
 
-    // Get status from CommSession API
+    // Get status from Vatessa API
     try {
       var apiStatus = getMessageStatus(messageId);
 
-      // Edge case 2: Message not found (unlinked in CommSession)
+      // Edge case 2: Message not found (unlinked in Vatessa)
       if (!apiStatus) {
         docProperties.deleteAllProperties();
         return {
@@ -149,6 +149,9 @@ function getDocumentStatus() {
       var currentHash = generateContentHash();
       var hasChanges = storedHash && currentHash !== storedHash;
 
+      // Get stored message type
+      var messageType = docProperties.getProperty('vatessa_message_type') || 'communication';
+
       return {
         linked: true,
         messageId: messageId,
@@ -157,7 +160,8 @@ function getDocumentStatus() {
         documentName: docTitle,
         status: apiStatus,
         hasChanges: hasChanges,
-        currentHash: currentHash
+        currentHash: currentHash,
+        messageType: messageType
       };
     } catch (error) {
       // Edge case 3: Access token expired (401)
@@ -192,13 +196,13 @@ function getDocumentContent() {
 }
 
 /**
- * Opens CommSession web app to create a new message
+ * Opens Vatessa web app to create a new message
  * User will authenticate and link document there
  */
-function createMessageInCommSession() {
+function createMessageInVatessa() {
   var doc = DocumentApp.getActiveDocument();
   var docId = doc.getId();
-  var url = getCommSessionUrl() + '?source=google_docs&docId=' + docId;
+  var url = getVatessaUrl() + '?source=google_docs&docId=' + docId;
 
   return {
     success: true,
@@ -207,27 +211,27 @@ function createMessageInCommSession() {
 }
 
 /**
- * Syncs document to CommSession
+ * Syncs document to Vatessa
  */
-function syncToCommSession() {
+function syncToVatessa() {
   try {
     var docProperties = PropertiesService.getDocumentProperties();
-    var messageId = docProperties.getProperty('CS_MESSAGE_ID');
+    var messageId = docProperties.getProperty('vatessa_message_id');
 
     if (!messageId) {
       return {
         success: false,
-        error: 'Document not linked to CommSession. Create a message first.'
+        error: 'Document not linked to Vatessa. Create a message first.'
       };
     }
 
-    // Sync to CommSession
+    // Sync to Vatessa
     var result = syncContent(messageId);
 
     if (result.success) {
       // Update properties
-      docProperties.setProperty('CS_LAST_SYNC', result.syncedAt);
-      docProperties.setProperty('CS_CONTENT_HASH', result.contentHash);
+      docProperties.setProperty('vatessa_last_sync', result.syncedAt);
+      docProperties.setProperty('vatessa_content_hash', result.contentHash);
 
       return {
         success: true,
@@ -255,12 +259,12 @@ function syncToCommSession() {
 function submitMessageForReview() {
   try {
     var docProperties = PropertiesService.getDocumentProperties();
-    var messageId = docProperties.getProperty('CS_MESSAGE_ID');
+    var messageId = docProperties.getProperty('vatessa_message_id');
 
     if (!messageId) {
       return {
         success: false,
-        error: 'Document not linked to CommSession'
+        error: 'Document not linked to Vatessa'
       };
     }
 
@@ -289,18 +293,18 @@ function submitMessageForReview() {
 }
 
 /**
- * Opens CommSession web app for this message
+ * Opens Vatessa web app for this message
  */
-function openInCommSession() {
+function openInVatessa() {
   var docProperties = PropertiesService.getDocumentProperties();
-  var messageId = docProperties.getProperty('CS_MESSAGE_ID');
+  var messageId = docProperties.getProperty('vatessa_message_id');
 
   if (!messageId) {
     // If not linked, open create flow
-    return createMessageInCommSession();
+    return createMessageInVatessa();
   }
 
-  var url = getCommSessionUrl() + '/messages/' + messageId;
+  var url = getVatessaUrl() + '/messages/' + messageId;
   return {
     success: true,
     url: url
@@ -308,7 +312,7 @@ function openInCommSession() {
 }
 
 /**
- * Clears document link to CommSession
+ * Clears document link to Vatessa
  */
 function unlinkDocument() {
   var docProperties = PropertiesService.getDocumentProperties();
@@ -320,7 +324,7 @@ function unlinkDocument() {
 }
 
 /**
- * Stores auth token from CommSession
+ * Stores auth token from Vatessa
  * Called by sidebar after user authenticates in web app
  */
 function storeAuthToken(token) {
@@ -331,17 +335,17 @@ function storeAuthToken(token) {
 }
 
 /**
- * Stores message ID after linking in CommSession
+ * Stores message ID after linking in Vatessa
  * Called by sidebar after user links document in web app
  */
 function storeMessageId(messageId) {
   var docProperties = PropertiesService.getDocumentProperties();
-  docProperties.setProperty('CS_MESSAGE_ID', messageId);
+  docProperties.setProperty('vatessa_message_id', messageId);
 
   // Initial sync to set content hash
   var currentHash = generateContentHash();
-  docProperties.setProperty('CS_CONTENT_HASH', currentHash);
-  docProperties.setProperty('CS_LAST_SYNC', new Date().toISOString());
+  docProperties.setProperty('vatessa_content_hash', currentHash);
+  docProperties.setProperty('vatessa_last_sync', new Date().toISOString());
 
   return {
     success: true
@@ -353,7 +357,7 @@ function storeMessageId(messageId) {
  */
 function checkForChanges() {
   var docProperties = PropertiesService.getDocumentProperties();
-  var storedHash = docProperties.getProperty('CS_CONTENT_HASH');
+  var storedHash = docProperties.getProperty('vatessa_content_hash');
 
   if (!storedHash) {
     return { hasChanges: false };
@@ -365,4 +369,112 @@ function checkForChanges() {
     currentHash: currentHash,
     storedHash: storedHash
   };
+}
+
+/**
+ * Sends document for approval
+ * Creates a new message or updates existing one
+ * @param {string} messageType - 'communication' or 'policy'
+ */
+function sendForApproval(messageType) {
+  try {
+    var doc = DocumentApp.getActiveDocument();
+    var docProperties = PropertiesService.getDocumentProperties();
+    var messageId = docProperties.getProperty('vatessa_message_id');
+
+    // Get document content
+    var content = {
+      id: doc.getId(),
+      name: doc.getName(),
+      title: doc.getName(),
+      content: doc.getBody().getText()
+    };
+
+    // Try to parse structured content if available
+    try {
+      var structured = parseStructuredContent(doc.getBody());
+      if (structured.title) content.title = structured.title;
+      if (structured.summary) content.summary = structured.summary;
+      if (structured.audience) content.audience = structured.audience;
+      if (structured.audienceSize) content.audienceSize = structured.audienceSize;
+      if (structured.keyPoints) content.keyPoints = structured.keyPoints;
+      if (structured.body) content.content = structured.body;
+    } catch (e) {
+      Logger.log('Could not parse structured content: ' + e.toString());
+    }
+
+    var result;
+    if (messageId) {
+      // Update existing message
+      result = VatessaApi.updateMessage(messageId, content);
+    } else {
+      // Create new message with type
+      result = VatessaApi.createMessage(content, messageType || 'communication');
+      if (result && result.id) {
+        docProperties.setProperty('vatessa_message_id', result.id);
+        messageId = result.id;
+      }
+    }
+
+    // Update sync properties
+    var currentHash = generateContentHash();
+    docProperties.setProperty('vatessa_content_hash', currentHash);
+    docProperties.setProperty('vatessa_last_sync', new Date().toISOString());
+    if (messageType) {
+      docProperties.setProperty('vatessa_message_type', messageType);
+    }
+
+    return {
+      success: true,
+      messageId: messageId || result.id,
+      isNew: !messageId
+    };
+  } catch (error) {
+    Logger.log('sendForApproval error: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Gets the stored message type for this document
+ */
+function getStoredMessageType() {
+  var docProperties = PropertiesService.getDocumentProperties();
+  return docProperties.getProperty('vatessa_message_type') || 'communication';
+}
+
+/**
+ * Analyzes document content with Vatessa AI
+ */
+function analyzeDocument() {
+  try {
+    var doc = DocumentApp.getActiveDocument();
+    var content = {
+      name: doc.getName(),
+      content: doc.getBody().getText()
+    };
+
+    // Try to parse structured content
+    try {
+      var structured = parseStructuredContent(doc.getBody());
+      Object.assign(content, structured);
+    } catch (e) {
+      Logger.log('Could not parse structured content: ' + e.toString());
+    }
+
+    var analysis = VatessaApi.analyzeMessage(content);
+    return {
+      success: true,
+      analysis: analysis
+    };
+  } catch (error) {
+    Logger.log('analyzeDocument error: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
 }

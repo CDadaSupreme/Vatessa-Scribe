@@ -1,4 +1,4 @@
-# CommSession Google Docs Add-on - Setup Guide
+# Vatessa Google Docs Add-on - Setup Guide
 
 Quick start guide to get the add-on running locally.
 
@@ -33,13 +33,13 @@ This will:
 
 ## Step 3: Create Apps Script Project
 
-From the `commsession-google-docs-addon` directory:
+From the `vatessa-google-docs-addon` directory:
 
 ```bash
-cd C:/dev/kanovi/commsession-google-docs-addon
+cd C:/dev/kanovi/vatessa-google-docs-addon
 
 # Create new Apps Script project
-clasp create --type standalone --title "CommSession Google Docs Add-on"
+clasp create --type standalone --title "Vatessa Google Docs Add-on"
 ```
 
 This creates a `.clasp.json` file with your script ID (already gitignored).
@@ -88,7 +88,7 @@ This opens your project in the Apps Script web IDE where you can:
 3. This opens the bound script project
 4. Run `onOpen()` to add the menu item
 5. Refresh the document
-6. Go to **Add-ons** → **CommSession** → **Open CommSession**
+6. Go to **Add-ons** → **Vatessa** → **Open Vatessa**
 
 ## Step 8: Link to Google Cloud Project (For Production)
 
@@ -145,14 +145,14 @@ clasp pull
 
 ### API Endpoint
 
-Edit `src/API.gs` to set the CommSession API URL:
+Edit `src/API.gs` to set the Vatessa API URL:
 
 ```javascript
 // For local development
-var COMMSESSION_API_URL = 'http://localhost:5000';
+var VATESSA_API_URL = 'http://localhost:5000';
 
 // For production
-var COMMSESSION_API_URL = 'https://api.commsession.com';
+var VATESSA_API_URL = 'https://api.vatessa.com';
 ```
 
 ### Authentication
@@ -164,7 +164,7 @@ Currently, the add-on requires setting an auth token. Options:
    // User runs this once in Apps Script
    function setMyToken() {
      PropertiesService.getUserProperties()
-       .setProperty('COMMSESSION_AUTH_TOKEN', 'your-token-here');
+       .setProperty('VATESSA_AUTH_TOKEN', 'your-token-here');
    }
    ```
 
@@ -214,11 +214,11 @@ npm install -g @google/clasp
 ## File Structure
 
 ```
-commsession-google-docs-addon/
+vatessa-google-docs-addon/
 ├── src/
 │   ├── Code.gs              # Main entry point & menu handlers
 │   ├── Sidebar.html         # Sidebar UI (includes inline CSS & JS)
-│   ├── API.gs               # CommSession API client
+│   ├── API.gs               # Vatessa API client
 │   ├── Fingerprint.gs       # SHA-256 content hashing
 │   └── Utils.gs             # Helper functions
 ├── styles/
@@ -238,9 +238,9 @@ After successful local setup:
 
 1. Test all functionality:
    - [ ] Sidebar loads
-   - [ ] Sync to CommSession works
+   - [ ] Sync to Vatessa works
    - [ ] Status display shows correctly
-   - [ ] Open in CommSession works
+   - [ ] Open in Vatessa works
    - [ ] Unlink document works
 
 2. Configure production API endpoint
@@ -254,10 +254,10 @@ After successful local setup:
 - [Google Apps Script Documentation](https://developers.google.com/apps-script)
 - [clasp Documentation](https://github.com/google/clasp)
 - [Google Workspace Add-ons](https://developers.google.com/workspace/add-ons)
-- [CommSession API Documentation](https://docs.commsession.com/api)
+- [Vatessa API Documentation](https://docs.vatessa.com/api)
 
 ## Support
 
 For issues or questions:
-- **Engineering**: dev@commsession.com
-- **General**: support@commsession.com
+- **Engineering**: dev@vatessa.com
+- **General**: support@vatessa.com

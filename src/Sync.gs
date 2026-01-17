@@ -1,6 +1,6 @@
 /**
  * Sync Logic
- * Handles synchronization between Google Docs and CommSession
+ * Handles synchronization between Google Docs and Vatessa
  */
 
 /**
@@ -124,7 +124,7 @@ function loadStatus() {
       if (linkCheck.authRequired) {
         return {
           state: 'auth_required',
-          message: 'Please connect to CommSession'
+          message: 'Please connect to Vatessa'
         };
       }
 
@@ -134,7 +134,7 @@ function loadStatus() {
       } else {
         return {
           state: 'unlinked',
-          message: 'Not connected to CommSession'
+          message: 'Not connected to Vatessa'
         };
       }
     }
@@ -149,7 +149,7 @@ function loadStatus() {
       return {
         state: 'unlinked',
         reason: 'MESSAGE_DELETED',
-        message: 'This message no longer exists in CommSession'
+        message: 'This message no longer exists in Vatessa'
       };
     }
 
@@ -188,7 +188,7 @@ function loadStatus() {
 }
 
 /**
- * Syncs document content to CommSession
+ * Syncs document content to Vatessa
  */
 function syncDocumentContent(messageId) {
   var content = getDocumentContentWithMetadata();
@@ -254,7 +254,7 @@ function getDocumentInfo() {
  */
 function getStoredMessageId() {
   var docProperties = PropertiesService.getDocumentProperties();
-  return docProperties.getProperty('CS_MESSAGE_ID');
+  return docProperties.getProperty('vatessa_message_id');
 }
 
 /**
@@ -262,7 +262,7 @@ function getStoredMessageId() {
  */
 function setStoredMessageId(messageId) {
   var docProperties = PropertiesService.getDocumentProperties();
-  docProperties.setProperty('CS_MESSAGE_ID', messageId);
+  docProperties.setProperty('vatessa_message_id', messageId);
 }
 
 /**
@@ -270,7 +270,7 @@ function setStoredMessageId(messageId) {
  */
 function clearStoredMessageId() {
   var docProperties = PropertiesService.getDocumentProperties();
-  docProperties.deleteProperty('CS_MESSAGE_ID');
+  docProperties.deleteProperty('vatessa_message_id');
 }
 
 /**
@@ -278,7 +278,7 @@ function clearStoredMessageId() {
  */
 function getStoredHash() {
   var docProperties = PropertiesService.getDocumentProperties();
-  return docProperties.getProperty('CS_CONTENT_HASH');
+  return docProperties.getProperty('vatessa_content_hash');
 }
 
 /**
@@ -286,8 +286,8 @@ function getStoredHash() {
  */
 function setStoredHash(hash) {
   var docProperties = PropertiesService.getDocumentProperties();
-  docProperties.setProperty('CS_CONTENT_HASH', hash);
-  docProperties.setProperty('CS_LAST_SYNC', new Date().toISOString());
+  docProperties.setProperty('vatessa_content_hash', hash);
+  docProperties.setProperty('vatessa_last_sync', new Date().toISOString());
 }
 
 /**
@@ -295,8 +295,8 @@ function setStoredHash(hash) {
  */
 function clearStoredHash() {
   var docProperties = PropertiesService.getDocumentProperties();
-  docProperties.deleteProperty('CS_CONTENT_HASH');
-  docProperties.deleteProperty('CS_LAST_SYNC');
+  docProperties.deleteProperty('vatessa_content_hash');
+  docProperties.deleteProperty('vatessa_last_sync');
 }
 
 /**
@@ -318,7 +318,7 @@ function hasContentChanged() {
  */
 function getAuthToken() {
   var userProperties = PropertiesService.getUserProperties();
-  return userProperties.getProperty('CS_TOKEN');
+  return userProperties.getProperty('vatessa_token');
 }
 
 /**
@@ -326,7 +326,7 @@ function getAuthToken() {
  */
 function setAuthToken(token) {
   var userProperties = PropertiesService.getUserProperties();
-  userProperties.setProperty('CS_TOKEN', token);
+  userProperties.setProperty('vatessa_token', token);
 }
 
 /**
@@ -334,5 +334,5 @@ function setAuthToken(token) {
  */
 function clearAuthToken() {
   var userProperties = PropertiesService.getUserProperties();
-  userProperties.deleteProperty('CS_TOKEN');
+  userProperties.deleteProperty('vatessa_token');
 }

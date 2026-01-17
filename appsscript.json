@@ -11,8 +11,8 @@
   ],
   "addOns": {
     "common": {
-      "name": "CommSession",
-      "logoUrl": "https://www.commsession.com/logo.png",
+      "name": "Vatessa",
+      "logoUrl": "https://www.vatessa.com/logo.png",
       "layoutProperties": {
         "primaryColor": "#4F46E5",
         "secondaryColor": "#818CF8"

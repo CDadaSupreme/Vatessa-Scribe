@@ -1,6 +1,6 @@
 /**
  * Utility Functions
- * Helper functions for the CommSession add-on
+ * Helper functions for the Vatessa add-on
  */
 
 /**
@@ -150,7 +150,7 @@ function logInfo(message) {
  */
 function showToast(message, title, timeout) {
   var doc = DocumentApp.getActiveDocument();
-  title = title || 'CommSession';
+  title = title || 'Vatessa';
   timeout = timeout || 5;
 
   try {
@@ -165,7 +165,7 @@ function showToast(message, title, timeout) {
  */
 function showAlert(message, title, buttons) {
   var ui = DocumentApp.getUi();
-  title = title || 'CommSession';
+  title = title || 'Vatessa';
   buttons = buttons || ui.ButtonSet.OK;
 
   return ui.alert(title, message, buttons);
@@ -176,7 +176,7 @@ function showAlert(message, title, buttons) {
  */
 function showConfirm(message, title) {
   var ui = DocumentApp.getUi();
-  title = title || 'CommSession';
+  title = title || 'Vatessa';
 
   var response = ui.alert(title, message, ui.ButtonSet.YES_NO);
   return response === ui.Button.YES;
@@ -204,7 +204,7 @@ function setConfig(key, value) {
  */
 function isAuthenticated() {
   var userProperties = PropertiesService.getUserProperties();
-  var token = userProperties.getProperty('COMMSESSION_AUTH_TOKEN');
+  var token = userProperties.getProperty('VATESSA_AUTH_TOKEN');
   return !!token;
 }
 
@@ -295,12 +295,12 @@ function retryWithBackoff(func, maxRetries, initialDelay) {
 }
 
 /**
- * Opens CommSession web app for creating a new message
+ * Opens Vatessa web app for creating a new message
  */
 function openCreateMessage() {
   var doc = DocumentApp.getActiveDocument();
   var docId = doc.getId();
-  var url = 'https://app.commsession.com/messages/new?source=google_docs&docId=' + docId;
+  var url = 'https://app.vatessa.com/messages/new?source=google_docs&docId=' + docId;
 
   var html = HtmlService.createHtmlOutput(
     '<script>' +
@@ -309,13 +309,13 @@ function openCreateMessage() {
     '</script>'
   );
 
-  DocumentApp.getUi().showModalDialog(html, 'Opening CommSession...');
+  DocumentApp.getUi().showModalDialog(html, 'Opening Vatessa...');
 }
 
 /**
- * Opens CommSession web app for this message
+ * Opens Vatessa web app for this message
  */
-function openMessageInCommSession(webAppUrl) {
+function openMessageInVatessa(webAppUrl) {
   var html = HtmlService.createHtmlOutput(
     '<script>' +
     'window.open("' + webAppUrl + '", "_blank");' +
@@ -323,5 +323,5 @@ function openMessageInCommSession(webAppUrl) {
     '</script>'
   );
 
-  DocumentApp.getUi().showModalDialog(html, 'Opening CommSession...');
+  DocumentApp.getUi().showModalDialog(html, 'Opening Vatessa...');
 }

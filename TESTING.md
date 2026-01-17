@@ -1,4 +1,4 @@
-# Testing Checklist - CommSession Google Docs Add-on
+# Testing Checklist - Vatessa Google Docs Add-on
 
 ## ✅ Testing Checklist (Before Deployment)
 
@@ -6,7 +6,7 @@
 
 - [ ] User can open sidebar in Google Doc
 - [ ] Unlinked doc shows "Not connected" state
-- [ ] "Create Message" button opens CommSession web app
+- [ ] "Create Message" button opens Vatessa web app
 - [ ] After linking, sidebar shows "Connected" state
 - [ ] Linked doc persists state after closing/reopening
 
@@ -22,7 +22,7 @@
 ### Sync Functionality
 
 - [ ] Changes detected indicator appears when doc is edited
-- [ ] Manual sync button updates CommSession
+- [ ] Manual sync button updates Vatessa
 - [ ] Hash comparison works correctly
 - [ ] Sync clears "Changes detected" indicator
 - [ ] Duplicate syncs don't create duplicate versions
@@ -33,14 +33,14 @@
 - [ ] Submit syncs latest changes first
 - [ ] Status changes to "In Review" after submit
 - [ ] Success message displays
-- [ ] "Track in CommSession" link opens web app
+- [ ] "Track in Vatessa" link opens web app
 
 ### Edge Cases
 
 - [ ] Duplicated doc ("Copy of...") prompts re-link
 - [ ] Expired auth token shows re-authentication prompt
 - [ ] Network error shows helpful error message
-- [ ] Doc unlinked in CommSession shows unlinked state
+- [ ] Doc unlinked in Vatessa shows unlinked state
 - [ ] Multiple users can open same doc without conflicts
 
 ## 🎯 Success Criteria for V1
@@ -50,7 +50,7 @@ V1 is successful if:
 ### ✅ 3 pilot customers can use it daily
 
 - Draft in Google Docs
-- Link to CommSession messages
+- Link to Vatessa messages
 - Sync changes reliably
 - Submit for review without issues
 
@@ -93,11 +93,11 @@ V1 is successful if:
 ### Test 1: First-Time User Flow
 
 1. Open a new Google Doc
-2. Click Extensions → CommSession → Open CommSession
-3. Verify sidebar shows "Not connected to CommSession"
-4. Click "Create Message in CommSession"
-5. Verify CommSession web app opens in new tab with `?source=google_docs&docId={id}`
-6. In CommSession: Create message, link document
+2. Click Extensions → Vatessa → Open Vatessa
+3. Verify sidebar shows "Not connected to Vatessa"
+4. Click "Create Message in Vatessa"
+5. Verify Vatessa web app opens in new tab with `?source=google_docs&docId={id}`
+6. In Vatessa: Create message, link document
 7. Return to Google Doc, refresh sidebar
 8. Verify sidebar now shows "Connected" state with message title and plan
 
@@ -109,7 +109,7 @@ V1 is successful if:
 4. Click "Sync Changes"
 5. Verify success message appears
 6. Verify banner disappears
-7. Check CommSession web app to confirm content updated
+7. Check Vatessa web app to confirm content updated
 
 ### Test 3: Submit for Review Flow
 
@@ -119,7 +119,7 @@ V1 is successful if:
 4. Click "Submit"
 5. Verify success message with approver names
 6. Verify status badge changes to "In Review"
-7. Check CommSession web app to confirm status change
+7. Check Vatessa web app to confirm status change
 
 ### Test 4: Edge Case - Document Duplication
 

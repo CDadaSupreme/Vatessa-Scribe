@@ -1,116 +1,228 @@
 /**
- * CommSession API Client
- * Handles all API communication with CommSession backend
+ * Vatessa API Client
+ * Handles all API communication with Vatessa backend
  */
 
-// API Configuration
-var API_BASE = 'https://app.commsession.com/api/v2';
-// var API_BASE = 'http://localhost:5173/api/v2';  // Development
+const VatessaApi = {
+  BASE_URL: 'https://api.vatessa.com',
+  // BASE_URL: 'http://localhost:3000',  // Development
 
-/**
- * Makes an authenticated API call to CommSession
- */
+  /**
+   * Get auth token from OAuth service
+   */
+  getToken() {
+    const service = getOAuthService();
+    if (service.hasAccess()) {
+      return service.getAccessToken();
+    }
+    return null;
+  },
+
+  /**
+   * Make authenticated request to Vatessa
+   */
+  fetch(endpoint, options = {}) {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Not authenticated. Please connect to Vatessa.');
+    }
+
+    const fetchOptions = {
+      method: options.method || 'get',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+      muteHttpExceptions: true,
+    };
+
+    if (options.payload) {
+      fetchOptions.payload = typeof options.payload === 'string'
+        ? options.payload
+        : JSON.stringify(options.payload);
+    }
+
+    try {
+      const response = UrlFetchApp.fetch(this.BASE_URL + endpoint, fetchOptions);
+      const code = response.getResponseCode();
+      const text = response.getContentText();
+
+      // Handle auth errors
+      if (code === 401) {
+        resetOAuth();
+        throw new Error('AUTH_EXPIRED');
+      }
+
+      // Handle not found
+      if (code === 404) {
+        return { error: 'NOT_FOUND', statusCode: 404 };
+      }
+
+      // Handle other errors
+      if (code >= 400) {
+        const errorData = text ? JSON.parse(text) : {};
+        throw new Error(errorData.error || 'API request failed');
+      }
+
+      return text ? JSON.parse(text) : {};
+
+    } catch (error) {
+      Logger.log('API Error: ' + error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Analyze message content with AI
+   */
+  analyzeMessage(content) {
+    return this.fetch('/api/governance/analyze', {
+      method: 'POST',
+      payload: {
+        title: content.title || content.name,
+        summary: content.summary || '',
+        audience: content.audience || '',
+        audienceSize: content.audienceSize || 0,
+        keyPoints: content.keyPoints || '',
+        body: content.content,
+        tone: content.tone || 'professional',
+      },
+    });
+  },
+
+  /**
+   * Create new message
+   * @param {Object} content - Document content
+   * @param {string} messageType - 'communication' or 'policy'
+   */
+  createMessage(content, messageType) {
+    return this.fetch('/api/messages', {
+      method: 'POST',
+      payload: {
+        title: content.title || content.name,
+        summary: content.summary || '',
+        audience: content.audience || '',
+        audienceSize: content.audienceSize || 0,
+        keyPoints: content.keyPoints || '',
+        body: content.content,
+        tone: content.tone || 'professional',
+        message_type: messageType || 'communication',
+        sourceType: 'google_docs',
+        sourceId: content.id,
+      },
+    });
+  },
+
+  /**
+   * Update existing message
+   */
+  updateMessage(messageId, content) {
+    return this.fetch('/api/messages/' + messageId, {
+      method: 'PUT',
+      payload: {
+        title: content.title || content.name,
+        summary: content.summary || '',
+        audience: content.audience || '',
+        audienceSize: content.audienceSize || 0,
+        keyPoints: content.keyPoints || '',
+        body: content.content,
+      },
+    });
+  },
+
+  /**
+   * Get message status
+   */
+  getMessageStatus(messageId) {
+    return this.fetch('/api/messages/' + messageId);
+  },
+
+  /**
+   * Check if document is linked to a message
+   */
+  checkDocumentLinked(docId) {
+    try {
+      return this.fetch('/api/documents/google/' + docId);
+    } catch (error) {
+      if (error.message === 'AUTH_EXPIRED' || error.message.includes('Not authenticated')) {
+        return { linked: false, authRequired: true };
+      }
+      if (error.message === 'NOT_FOUND') {
+        return { linked: false };
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Submit message for review
+   */
+  submitForReview(messageId, syncFirst) {
+    return this.fetch('/api/messages/' + messageId + '/submit', {
+      method: 'POST',
+      payload: {
+        syncFirst: syncFirst !== false,
+      },
+    });
+  },
+
+  /**
+   * Link document to message
+   */
+  linkDocument(messageId, docId, docUrl) {
+    const hash = generateContentHash();
+
+    const result = this.fetch('/api/messages/' + messageId + '/link-document', {
+      method: 'POST',
+      payload: {
+        documentId: docId,
+        documentUrl: docUrl,
+        platform: 'google_docs',
+        contentHash: hash,
+      },
+    });
+
+    if (result.success) {
+      const docProperties = PropertiesService.getDocumentProperties();
+      docProperties.setProperty('vatessa_message_id', messageId);
+      docProperties.setProperty('vatessa_content_hash', hash);
+      docProperties.setProperty('vatessa_last_sync', new Date().toISOString());
+    }
+
+    return result;
+  },
+
+  /**
+   * Unlink document from message
+   */
+  unlinkDocument(messageId) {
+    return this.fetch('/api/messages/' + messageId + '/unlink-document', {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Legacy function wrappers for backward compatibility
 function makeAPICall(endpoint, method, payload) {
-  var token = getAuthToken();
-
-  if (!token) {
-    throw new Error('AUTH_REQUIRED');
-  }
-
-  var options = {
-    method: method.toLowerCase(),
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json'
-    },
-    muteHttpExceptions: true
-  };
-
-  if (payload && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
-    options.payload = JSON.stringify(payload);
-  }
-
-  try {
-    var response = UrlFetchApp.fetch(API_BASE + endpoint, options);
-    var statusCode = response.getResponseCode();
-    var responseText = response.getContentText();
-
-    // Handle auth errors
-    if (statusCode === 401) {
-      clearAuthToken();
-      throw new Error('AUTH_EXPIRED');
-    }
-
-    // Handle not found
-    if (statusCode === 404) {
-      return { error: 'NOT_FOUND', statusCode: 404 };
-    }
-
-    // Handle other errors
-    if (statusCode >= 400) {
-      var errorData = JSON.parse(responseText);
-      throw new Error(errorData.error || 'API_ERROR');
-    }
-
-    return JSON.parse(responseText);
-
-  } catch (error) {
-    Logger.log('API Error: ' + error.message);
-    throw error;
-  }
+  return VatessaApi.fetch(endpoint, {
+    method: method,
+    payload: payload,
+  });
 }
 
-/**
- * Checks if document is already linked to a message
- */
 function checkDocumentLinked(docId) {
-  try {
-    return makeAPICall('/documents/google/' + docId, 'GET');
-  } catch (error) {
-    if (error.message === 'AUTH_REQUIRED' || error.message === 'AUTH_EXPIRED') {
-      return { linked: false, authRequired: true };
-    }
-    throw error;
-  }
+  return VatessaApi.checkDocumentLinked(docId);
 }
 
-/**
- * Gets message status for sidebar display
- */
 function getMessageStatus(messageId) {
-  return makeAPICall('/messages/' + messageId + '/status', 'GET');
+  return VatessaApi.getMessageStatus(messageId);
 }
 
-/**
- * Submits message for review
- */
 function submitForReview(messageId, syncFirst) {
-  var payload = {
-    syncFirst: syncFirst !== false // Default to true
-  };
-
-  return makeAPICall('/messages/' + messageId + '/submit', 'POST', payload);
+  return VatessaApi.submitForReview(messageId, syncFirst);
 }
 
-/**
- * Links document to CommSession message
- */
 function linkDocument(messageId, docId, docUrl) {
-  var hash = generateContentHash();
-
-  var payload = {
-    documentId: docId,
-    documentUrl: docUrl,
-    platform: 'google_docs',
-    contentHash: hash
-  };
-
-  var result = makeAPICall('/messages/' + messageId + '/link-document', 'POST', payload);
-
-  if (result.success) {
-    setStoredMessageId(messageId);
-    setStoredHash(hash);
-  }
-
-  return result;
+  return VatessaApi.linkDocument(messageId, docId, docUrl);
 }

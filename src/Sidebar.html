@@ -3,495 +3,565 @@
 <head>
   <base target="_top">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
-      font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      font-family: 'Google Sans', Arial, sans-serif;
+      font-size: 13px;
       padding: 16px;
-      color: #1F2937;
-      font-size: 14px;
-      line-height: 1.5;
+      margin: 0;
+      color: #202124;
     }
-
-    h3 {
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .logo {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+    }
+    .title {
       font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: #111827;
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
       font-weight: 500;
-      margin-bottom: 8px;
     }
-
-    .status-draft { background: #E5E7EB; color: #374151; }
-    .status-in_review { background: #FEF3C7; color: #92400E; }
-    .status-approved { background: #D1FAE5; color: #065F46; }
-    .status-changes_requested { background: #DBEAFE; color: #1E40AF; }
-    .status-rejected { background: #FEE2E2; color: #991B1B; }
-
-    .card {
-      background: #F9FAFB;
+    .status-card {
+      background: #f8f9fa;
       border-radius: 8px;
       padding: 12px;
       margin-bottom: 16px;
     }
-
-    .card p {
-      margin: 4px 0;
-      font-size: 13px;
-      color: #4B5563;
+    .status-label {
+      font-size: 11px;
+      color: #5f6368;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-
-    .divider {
-      border: none;
-      border-top: 1px solid #E5E7EB;
-      margin: 16px 0;
-    }
-
-    .approvers-list {
-      margin: 12px 0;
-    }
-
-    .approver-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #F3F4F6;
-    }
-
-    .approver-item:last-child {
-      border-bottom: none;
-    }
-
-    .approver-name {
-      font-size: 13px;
-      color: #374151;
-    }
-
-    .approver-role {
-      font-size: 12px;
-      color: #6B7280;
-    }
-
-    .changes-banner {
-      background: #FEF3C7;
-      border: 1px solid #FCD34D;
-      border-radius: 6px;
-      padding: 10px;
-      margin-bottom: 12px;
-      font-size: 13px;
-      color: #92400E;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 10px 16px;
-      border-radius: 6px;
-      border: none;
+    .status-value {
       font-size: 14px;
       font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 8px;
-      display: flex;
+      margin-top: 4px;
+    }
+    .btn {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      margin-bottom: 8px;
+      transition: all 0.2s;
     }
-
     .btn-primary {
-      background: #2563EB;
+      background: #1a73e8;
       color: white;
     }
-
     .btn-primary:hover {
-      background: #1D4ED8;
+      background: #1557b0;
     }
-
     .btn-secondary {
       background: white;
-      color: #2563EB;
-      border: 1px solid #2563EB;
+      color: #1a73e8;
+      border: 1px solid #dadce0;
     }
-
     .btn-secondary:hover {
-      background: #EFF6FF;
+      background: #f8f9fa;
     }
-
     .btn:disabled {
-      opacity: 0.5;
+      opacity: 0.6;
       cursor: not-allowed;
     }
-
+    .analysis-section {
+      margin-top: 16px;
+      border-top: 1px solid #dadce0;
+      padding-top: 16px;
+    }
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f3f4;
+    }
+    .score-label {
+      color: #5f6368;
+    }
+    .score-value {
+      font-weight: 500;
+    }
+    .score-good { color: #188038; }
+    .score-warning { color: #f9ab00; }
+    .score-bad { color: #d93025; }
+    .suggestion {
+      background: #fef7e0;
+      border-left: 3px solid #f9ab00;
+      padding: 8px 12px;
+      margin: 8px 0;
+      font-size: 12px;
+      border-radius: 0 4px 4px 0;
+    }
+    .suggestion-original {
+      text-decoration: line-through;
+      color: #5f6368;
+    }
+    .suggestion-new {
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .suggestion-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+    .suggestion-btn {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
     .loading {
       text-align: center;
-      padding: 40px 20px;
-      color: #6B7280;
+      padding: 20px;
+      color: #5f6368;
     }
-
     .spinner {
-      border: 2px solid #F3F4F6;
-      border-top: 2px solid #2563EB;
+      border: 2px solid #f3f4f6;
+      border-top: 2px solid #1a73e8;
       border-radius: 50%;
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       animation: spin 1s linear infinite;
       margin: 0 auto 12px;
     }
-
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
-    .error-message {
-      background: #FEE2E2;
-      border: 1px solid #FCA5A5;
-      border-radius: 6px;
+    .error {
+      background: #fce8e6;
+      color: #c5221f;
       padding: 12px;
-      color: #991B1B;
-      font-size: 13px;
-      margin-bottom: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
     }
-
-    .sync-indicator {
-      font-size: 12px;
-      color: #059669;
+    .changes-banner {
+      background: #fff3e0;
+      border: 1px solid #ffcc80;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #e65100;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
     }
-
-    .unlinked-state {
-      text-align: center;
-      padding: 20px;
+    .approvers-list {
+      margin: 8px 0;
     }
-
-    .unlinked-state p {
-      color: #6B7280;
-      margin: 12px 0 20px;
-      line-height: 1.6;
+    .approver-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #f1f3f4;
+      font-size: 12px;
+    }
+    .approver-item:last-child {
+      border-bottom: none;
+    }
+    .type-selector {
+      margin-bottom: 12px;
+    }
+    .type-selector label {
+      font-size: 11px;
+      color: #5f6368;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .type-selector select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 13px;
+      background: white;
+      cursor: pointer;
+    }
+    .type-selector select:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+    .policy-note {
+      background: #e8f0fe;
+      border: 1px solid #c2d7f8;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: #1967d2;
     }
   </style>
 </head>
 <body>
-  <div id="app">
-    <!-- Loading State -->
-    <div id="loading-state">
-      <div class="loading">
-        <div class="spinner"></div>
-        <p>Loading...</p>
-      </div>
-    </div>
+  <div class="header">
+    <svg class="logo" viewBox="0 0 24 24" fill="#1a73e8">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+    <span class="title">Vatessa</span>
+  </div>
 
-    <!-- Unlinked State -->
-    <div id="unlinked-state" style="display: none;">
-      <div class="unlinked-state">
-        <h3>Not connected to CommSession</h3>
-        <p>Track approvals, comments, and version history for this document.</p>
-        <button class="btn btn-primary" onclick="createMessage()">
-          Create Message in CommSession
-        </button>
-      </div>
-    </div>
-
-    <!-- Linked State -->
-    <div id="linked-state" style="display: none;">
-      <div class="card">
-        <h3 id="message-title">Loading...</h3>
-        <p id="plan-name"></p>
-        <div>
-          <span id="status-badge" class="status-badge">Draft</span>
-        </div>
-        <p id="sync-time" class="sync-indicator"></p>
-      </div>
-
-      <hr class="divider">
-
-      <div>
-        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">👥 Approvers</h4>
-        <div class="approvers-list" id="approvers">
-          <!-- Populated dynamically -->
-        </div>
-      </div>
-
-      <p id="comment-count" style="margin: 12px 0; font-size: 13px; color: #6B7280;"></p>
-
-      <hr class="divider">
-
-      <div id="changes-indicator" style="display: none;">
-        <div class="changes-banner">
-          🔄 Changes detected
-        </div>
-        <button class="btn btn-secondary" onclick="syncChanges()">
-          Sync Changes
-        </button>
-      </div>
-
-      <button class="btn btn-primary" onclick="openInCommSession()">
-        📋 Open in CommSession
-      </button>
-
-      <button class="btn btn-secondary" onclick="submitForReview()">
-        ✅ Submit for Review
-      </button>
-    </div>
-
-    <!-- Error State -->
-    <div id="error-state" style="display: none;">
-      <div class="error-message" id="error-message"></div>
-      <button class="btn btn-secondary" onclick="retryLoad()">
-        Retry
-      </button>
+  <div id="content">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading...</p>
     </div>
   </div>
 
   <script>
-    let currentState = null;
-    let pollingInterval = null;
+    let state = {
+      connected: false,
+      messageId: null,
+      analysis: null,
+      status: null,
+      loading: true,
+      error: null,
+      messageType: 'communication',
+    };
 
-    // Initialize on load
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+      checkStatus();
+    });
 
-    function init() {
-      loadStatus();
-      // Start polling every 30 seconds
-      pollingInterval = setInterval(loadStatus, 30000);
-    }
-
-    function loadStatus() {
+    function checkStatus() {
       google.script.run
-        .withSuccessHandler(handleStatusLoaded)
+        .withSuccessHandler(handleStatusResponse)
         .withFailureHandler(handleError)
-        .loadStatus();
+        .getConnectionStatus();
     }
 
-    function handleStatusLoaded(status) {
-      currentState = status;
-
-      hideAllStates();
-
-      if (status.state === 'unlinked') {
-        showUnlinkedState(status);
-      } else if (status.state === 'linked') {
-        showLinkedState(status);
-      } else if (status.state === 'auth_required') {
-        showUnlinkedState(status);
-      } else if (status.state === 'error') {
-        showErrorState(status.error);
-      }
-    }
-
-    function hideAllStates() {
-      document.getElementById('loading-state').style.display = 'none';
-      document.getElementById('unlinked-state').style.display = 'none';
-      document.getElementById('linked-state').style.display = 'none';
-      document.getElementById('error-state').style.display = 'none';
-    }
-
-    function showUnlinkedState(status) {
-      document.getElementById('unlinked-state').style.display = 'block';
-    }
-
-    function showLinkedState(status) {
-      document.getElementById('linked-state').style.display = 'block';
-
-      // Update title and plan
-      document.getElementById('message-title').textContent = status.title;
-      document.getElementById('plan-name').textContent = `Plan: ${status.planName}`;
-
-      // Update status badge
-      const statusBadge = document.getElementById('status-badge');
-      statusBadge.textContent = getStatusText(status.status);
-      statusBadge.className = 'status-badge status-' + status.status;
-
-      // Update sync time
-      document.getElementById('sync-time').innerHTML =
-        `✅ Synced ${formatTimeAgo(status.lastSyncedAt)}`;
-
-      // Update approvers
-      const approversList = document.getElementById('approvers');
-      approversList.innerHTML = '';
-
-      const maxVisible = 2;
-      status.approvers.slice(0, maxVisible).forEach(approver => {
-        const div = document.createElement('div');
-        div.className = 'approver-item';
-        div.innerHTML = `
-          <div>
-            <div class="approver-name">${approver.name}</div>
-            ${approver.role ? `<div class="approver-role">${approver.role}</div>` : ''}
-          </div>
-          <span>${getStatusEmoji(approver.status)}</span>
-        `;
-        approversList.appendChild(div);
-      });
-
-      if (status.approvers.length > maxVisible) {
-        const remaining = status.approvers.length - maxVisible;
-        const div = document.createElement('div');
-        div.style.paddingTop = '8px';
-        div.style.fontSize = '12px';
-        div.style.color = '#6B7280';
-        div.textContent = `+${remaining} more...`;
-        approversList.appendChild(div);
-      }
-
-      // Update comment count
-      document.getElementById('comment-count').textContent =
-        `💬 Comments (${status.commentCount})`;
-
-      // Show/hide changes indicator
-      if (status.hasChanges) {
-        document.getElementById('changes-indicator').style.display = 'block';
+    function handleStatusResponse(connectionStatus) {
+      state.connected = connectionStatus.connected;
+      state.messageId = connectionStatus.messageId;
+      state.loading = false;
+      if (state.connected) {
+        loadDocumentStatus();
       } else {
-        document.getElementById('changes-indicator').style.display = 'none';
+        render();
       }
     }
 
-    function showErrorState(error) {
-      document.getElementById('error-state').style.display = 'block';
-      document.getElementById('error-message').textContent = error;
+    function loadDocumentStatus() {
+      state.loading = true;
+      render();
+      google.script.run
+        .withSuccessHandler(handleDocStatusResponse)
+        .withFailureHandler(handleError)
+        .getDocumentStatus();
     }
 
-    function createMessage() {
+    function handleDocStatusResponse(docStatus) {
+      state.status = docStatus;
+      state.loading = false;
+      if (docStatus.linked && docStatus.messageId) {
+        state.messageId = docStatus.messageId;
+      }
+      // Restore saved message type if available
+      if (docStatus.messageType) {
+        state.messageType = docStatus.messageType;
+      }
+      render();
+    }
+
+    function loadAnalysis() {
+      state.loading = true;
+      render();
       google.script.run
+        .withSuccessHandler(handleAnalysisResponse)
         .withFailureHandler(handleError)
-        .openCreateMessage();
+        .analyzeDocument();
+    }
+
+    function handleAnalysisResponse(result) {
+      if (result.success) {
+        state.analysis = result.analysis;
+      } else {
+        state.error = result.error;
+      }
+      state.loading = false;
+      render();
+    }
+
+    function handleError(error) {
+      state.error = error.message || 'Something went wrong';
+      state.loading = false;
+      render();
+    }
+
+    function sendForApproval() {
+      state.loading = true;
+      render();
+      google.script.run
+        .withSuccessHandler((result) => {
+          if (result.success) {
+            state.messageId = result.messageId;
+            state.error = null;
+            loadDocumentStatus();
+          } else {
+            state.error = result.error;
+            state.loading = false;
+            render();
+          }
+        })
+        .withFailureHandler(handleError)
+        .sendForApproval(state.messageType);
+    }
+
+    function onMessageTypeChange(value) {
+      state.messageType = value;
+      render();
     }
 
     function syncChanges() {
-      // Disable button during sync
-      const btn = event.target;
-      btn.disabled = true;
-      btn.textContent = 'Syncing...';
-
+      state.loading = true;
+      render();
       google.script.run
-        .withSuccessHandler(result => {
-          btn.disabled = false;
-          btn.textContent = 'Sync Changes';
-
+        .withSuccessHandler((result) => {
           if (result.success) {
-            alert('Changes synced successfully!');
-            loadStatus(); // Refresh
-          } else if (result.error === 'AUTH_EXPIRED') {
-            alert('Your session has expired. Please reconnect to CommSession.');
-            loadStatus();
+            state.error = null;
           } else {
-            alert('Sync failed: ' + (result.error || 'Unknown error'));
+            state.error = result.error;
+          }
+          loadDocumentStatus();
+        })
+        .withFailureHandler(handleError)
+        .syncToVatessa();
+    }
+
+    function openInVatessa() {
+      google.script.run
+        .withSuccessHandler((result) => {
+          if (result.success && result.url) {
+            window.open(result.url, '_blank');
           }
         })
-        .withFailureHandler(error => {
-          btn.disabled = false;
-          btn.textContent = 'Sync Changes';
-          handleError(error);
+        .withFailureHandler(handleError)
+        .openInVatessa();
+    }
+
+    function acceptSuggestion(index) {
+      google.script.run
+        .withSuccessHandler(() => loadAnalysis())
+        .withFailureHandler(handleError)
+        .acceptSuggestion(index);
+    }
+
+    function dismissSuggestion(index) {
+      google.script.run
+        .withSuccessHandler(() => loadAnalysis())
+        .withFailureHandler(handleError)
+        .dismissSuggestion(index);
+    }
+
+    function connect() {
+      google.script.run
+        .withSuccessHandler(() => setTimeout(checkStatus, 1000))
+        .withFailureHandler(handleError)
+        .initiateOAuth();
+    }
+
+    function disconnect() {
+      google.script.run
+        .withSuccessHandler(() => {
+          state.connected = false;
+          state.messageId = null;
+          state.analysis = null;
+          state.status = null;
+          render();
         })
-        .performSync();
+        .withFailureHandler(handleError)
+        .disconnect();
     }
 
-    function openInCommSession() {
-      if (currentState && currentState.webAppUrl) {
-        google.script.run
-          .withFailureHandler(handleError)
-          .openMessageInCommSession(currentState.webAppUrl);
-      }
-    }
+    function render() {
+      const content = document.getElementById('content');
 
-    function submitForReview() {
-      if (!confirm('Submit for review?\n\nThis will:\n• Sync latest changes\n• Notify approvers\n• Mark message as "In Review"')) {
+      if (state.loading) {
+        content.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading...</p></div>';
         return;
       }
 
-      const btn = event.target;
-      btn.disabled = true;
-      btn.textContent = 'Submitting...';
+      if (state.error) {
+        content.innerHTML = '<div class="error">' + escapeHtml(state.error) + '</div>' +
+          '<button class="btn btn-secondary" onclick="state.error=null;checkStatus();">Retry</button>';
+        return;
+      }
 
-      google.script.run
-        .withSuccessHandler(result => {
-          btn.disabled = false;
-          btn.textContent = 'Submit for Review';
+      if (!state.connected) {
+        content.innerHTML = '<div class="status-card">' +
+          '<div class="status-label">Status</div>' +
+          '<div class="status-value">Not connected</div></div>' +
+          '<p style="color:#5f6368;margin-bottom:16px;font-size:12px;">' +
+          'Connect to Vatessa to analyze your document and manage approvals.</p>' +
+          '<button class="btn btn-primary" onclick="connect()">Connect to Vatessa</button>';
+        return;
+      }
 
-          if (result.success) {
-            const approverNames = result.notifiedApprovers.join(', ');
-            alert(`✅ Submitted for Review\n\nNotified: ${approverNames}`);
-            loadStatus(); // Refresh
-          } else if (result.error === 'AUTH_EXPIRED') {
-            alert('Your session has expired. Please reconnect to CommSession.');
-            loadStatus();
-          } else {
-            alert('Submit failed: ' + (result.error || 'Unknown error'));
+      let html = '';
+      const status = state.status || {};
+      const linked = status.linked;
+      const hasChanges = status.hasChanges;
+
+      html += '<div class="status-card">' +
+        '<div class="status-label">Document Status</div>' +
+        '<div class="status-value">' + (linked ? 'Linked to Vatessa' : 'Not yet sent') + '</div></div>';
+
+      if (hasChanges) {
+        html += '<div class="changes-banner">Changes detected since last sync</div>';
+      }
+
+      // Message type selector (only show when creating new message)
+      if (!state.messageId) {
+        html += '<div class="type-selector">' +
+          '<label>Message Type</label>' +
+          '<select onchange="onMessageTypeChange(this.value)">' +
+          '<option value="communication"' + (state.messageType === 'communication' ? ' selected' : '') + '>Communication</option>' +
+          '<option value="policy"' + (state.messageType === 'policy' ? ' selected' : '') + '>Policy</option>' +
+          '</select></div>';
+
+        // Policy note
+        if (state.messageType === 'policy') {
+          html += '<div class="policy-note">Policy settings (acknowledgment, due date) can be configured in the Vatessa web app.</div>';
+        }
+      }
+
+      html += '<button class="btn btn-primary" onclick="sendForApproval()">' +
+        (state.messageId ? 'Update & Sync' : 'Send for Approval') + '</button>';
+
+      if (state.messageId) {
+        html += '<button class="btn btn-secondary" onclick="openInVatessa()">Open in Vatessa</button>';
+        if (hasChanges) {
+          html += '<button class="btn btn-secondary" onclick="syncChanges()">Sync Changes Only</button>';
+        }
+      }
+
+      html += '<button class="btn btn-secondary" onclick="loadAnalysis()">Analyze Now</button>';
+
+      if (linked && status.status) {
+        const apiStatus = status.status;
+        html += '<div class="analysis-section"><div class="status-label">Message Info</div>' +
+          '<div class="score-row"><span class="score-label">Title</span>' +
+          '<span class="score-value">' + escapeHtml(apiStatus.title || status.documentName) + '</span></div>' +
+          '<div class="score-row"><span class="score-label">Status</span>' +
+          '<span class="score-value">' + escapeHtml(apiStatus.status || 'Draft') + '</span></div>';
+        if (status.lastSync) {
+          html += '<div class="score-row"><span class="score-label">Last Sync</span>' +
+            '<span class="score-value">' + formatTimeAgo(status.lastSync) + '</span></div>';
+        }
+        html += '</div>';
+
+        if (apiStatus.approvers && apiStatus.approvers.length > 0) {
+          html += '<div class="analysis-section"><div class="status-label">Approvers</div><div class="approvers-list">';
+          apiStatus.approvers.slice(0, 3).forEach(function(a) {
+            html += '<div class="approver-item"><span>' + escapeHtml(a.name || a.email) + '</span>' +
+              '<span>' + getStatusEmoji(a.status) + '</span></div>';
+          });
+          if (apiStatus.approvers.length > 3) {
+            html += '<div style="font-size:11px;color:#5f6368;padding-top:4px;">+' + (apiStatus.approvers.length - 3) + ' more</div>';
           }
-        })
-        .withFailureHandler(error => {
-          btn.disabled = false;
-          btn.textContent = 'Submit for Review';
-          handleError(error);
-        })
-        .performSubmit();
+          html += '</div></div>';
+        }
+      }
+
+      if (state.analysis) {
+        html += renderAnalysis(state.analysis);
+      }
+
+      html += '<div style="margin-top:24px;padding-top:16px;border-top:1px solid #dadce0;">' +
+        '<button class="btn btn-secondary" onclick="disconnect()" style="font-size:12px;color:#5f6368;">Disconnect</button></div>';
+
+      content.innerHTML = html;
     }
 
-    function retryLoad() {
-      hideAllStates();
-      document.getElementById('loading-state').style.display = 'block';
-      loadStatus();
+    function renderAnalysis(analysis) {
+      function scoreClass(score) {
+        if (score >= 8) return 'score-good';
+        if (score >= 5) return 'score-warning';
+        return 'score-bad';
+      }
+
+      let html = '<div class="analysis-section"><div class="status-label">Analysis</div>' +
+        '<div class="score-row"><span class="score-label">Overall</span>' +
+        '<span class="score-value ' + scoreClass(analysis.overall_score) + '">' +
+        (analysis.overall_score || 'N/A') + '/10</span></div>' +
+        '<div class="score-row"><span class="score-label">Brevity</span>' +
+        '<span class="score-value ' + scoreClass(analysis.brevity ? analysis.brevity.score : 0) + '">' +
+        ((analysis.brevity && analysis.brevity.score) || 'N/A') + '/10</span></div>' +
+        '<div class="score-row"><span class="score-label">Clarity</span>' +
+        '<span class="score-value ' + scoreClass(analysis.clarity ? analysis.clarity.score : 0) + '">' +
+        ((analysis.clarity && analysis.clarity.score) || 'N/A') + '/10</span></div>' +
+        '<div class="score-row"><span class="score-label">Risk Level</span>' +
+        '<span class="score-value">' + ((analysis.risks && analysis.risks.level) || 'None') + '</span></div></div>';
+
+      let allSuggestions = [];
+      if (analysis.brevity && analysis.brevity.suggestions) allSuggestions = allSuggestions.concat(analysis.brevity.suggestions);
+      if (analysis.tone && analysis.tone.suggestions) allSuggestions = allSuggestions.concat(analysis.tone.suggestions);
+      if (analysis.clarity && analysis.clarity.issues) allSuggestions = allSuggestions.concat(analysis.clarity.issues);
+
+      if (allSuggestions.length > 0) {
+        html += '<div class="analysis-section"><div class="status-label">Suggestions</div>';
+        allSuggestions.slice(0, 5).forEach(function(s, i) {
+          html += '<div class="suggestion">';
+          if (s.original) html += '<div class="suggestion-original">' + escapeHtml(s.original) + '</div>';
+          html += '<div class="suggestion-new">' + escapeHtml(s.suggestion || s.message || s) + '</div>' +
+            '<div class="suggestion-actions">' +
+            '<button class="suggestion-btn btn-primary" onclick="acceptSuggestion(' + i + ')">Apply</button>' +
+            '<button class="suggestion-btn btn-secondary" onclick="dismissSuggestion(' + i + ')">Dismiss</button>' +
+            '</div></div>';
+        });
+        html += '</div>';
+      }
+
+      if (analysis.triggered_rules && analysis.triggered_rules.length > 0) {
+        html += '<div class="analysis-section"><div class="status-label">Approval Rules Triggered</div>';
+        analysis.triggered_rules.forEach(function(rule) {
+          html += '<div class="score-row"><span class="score-label">' + escapeHtml(rule) + '</span></div>';
+        });
+        html += '</div>';
+      }
+
+      return html;
     }
 
     function getStatusEmoji(status) {
-      const emojis = {
-        'pending': '⏳',
-        'approved': '✅',
-        'changes_requested': '🔄',
-        'rejected': '❌'
-      };
+      var emojis = { 'pending': '⏳', 'approved': '✅', 'changes_requested': '🔄', 'rejected': '❌' };
       return emojis[status] || '⏳';
-    }
-
-    function getStatusText(status) {
-      const texts = {
-        'draft': 'Draft',
-        'in_review': 'In Review',
-        'approved': 'Approved',
-        'changes_requested': 'Changes Requested',
-        'rejected': 'Rejected'
-      };
-      return texts[status] || status;
     }
 
     function formatTimeAgo(timestamp) {
       if (!timestamp) return 'never';
-
-      const now = new Date();
-      const then = new Date(timestamp);
-      const diffMs = now - then;
-      const diffMins = Math.floor(diffMs / 1000 / 60);
-
+      var now = new Date();
+      var then = new Date(timestamp);
+      var diffMs = now - then;
+      var diffMins = Math.floor(diffMs / 1000 / 60);
       if (diffMins < 1) return 'just now';
-      if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-
-      const diffDays = Math.floor(diffHours / 24);
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      if (diffMins < 60) return diffMins + ' min ago';
+      var diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return diffHours + 'h ago';
+      var diffDays = Math.floor(diffHours / 24);
+      return diffDays + 'd ago';
     }
 
-    function handleError(error) {
-      console.error('Error:', error);
-      showErrorState(error.message || 'An unexpected error occurred');
+    function escapeHtml(text) {
+      if (!text) return '';
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
   </script>
 </body>

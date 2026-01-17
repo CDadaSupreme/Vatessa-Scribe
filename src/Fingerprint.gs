@@ -94,7 +94,7 @@ function hashesMatch(hash1, hash2) {
  */
 function isContentModified(content) {
   var properties = PropertiesService.getDocumentProperties();
-  var storedHash = properties.getProperty('COMMSESSION_CONTENT_HASH');
+  var storedHash = properties.getProperty('VATESSA_CONTENT_HASH');
 
   if (!storedHash) {
     // No stored hash means content is new/untracked
@@ -115,7 +115,7 @@ function isContentModified(content) {
  */
 function detectConflict(currentContent, messageId) {
   var properties = PropertiesService.getDocumentProperties();
-  var baseHash = properties.getProperty('COMMSESSION_CONTENT_HASH');
+  var baseHash = properties.getProperty('VATESSA_CONTENT_HASH');
 
   if (!baseHash) {
     // No base hash means this is first sync
