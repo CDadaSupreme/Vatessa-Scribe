@@ -20,11 +20,16 @@ const VatessaApi = {
 
   /**
    * Make authenticated request to Vatessa
+   * Returns { error, status } on 400+ instead of throwing,
+   * so callers can check result.error and result.status
    */
   fetch(endpoint, options = {}) {
     const token = this.getToken();
     if (!token) {
-      throw new Error('Not authenticated. Please connect to Vatessa.');
+      return {
+        error: { code: 'auth_required', message: 'Please connect your Vatessa account' },
+        status: 401,
+      };
     }
 
     const fetchOptions = {
@@ -48,33 +53,95 @@ const VatessaApi = {
       const code = response.getResponseCode();
       const text = response.getContentText();
 
-      // Handle auth errors
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        // Non-JSON response
+        data = { message: text };
+      }
+
+      // Handle auth errors - reset OAuth and return error
       if (code === 401) {
         resetOAuth();
-        throw new Error('AUTH_EXPIRED');
+        return {
+          error: { code: 'auth_expired', message: 'Your session has expired. Please reconnect.' },
+          status: 401,
+        };
       }
 
-      // Handle not found
-      if (code === 404) {
-        return { error: 'NOT_FOUND', statusCode: 404 };
-      }
-
-      // Handle other errors
+      // Return errors with status codes (don't throw)
       if (code >= 400) {
-        const errorData = text ? JSON.parse(text) : {};
-        throw new Error(errorData.error || 'API request failed');
+        return {
+          error: data.error || { code: 'api_error', message: 'Request failed' },
+          status: code,
+        };
       }
 
-      return text ? JSON.parse(text) : {};
+      return data;
 
     } catch (error) {
+      // Network/fetch errors
       Logger.log('API Error: ' + error.message);
-      throw error;
+      return {
+        error: { code: 'network_error', message: error.message },
+        status: 0,
+      };
     }
   },
 
   /**
-   * Analyze message content with AI
+   * Check if AI service is available
+   * NOTE: Path is /v2/ai/health (NOT /api/v2/ai/health)
+   * @returns {{ available: boolean } | { error: Object, status: number }}
+   */
+  checkAiHealth() {
+    const result = this.fetch('/v2/ai/health', { method: 'GET' });
+    // If there's an error, return available: false
+    if (result.error) {
+      return { available: false };
+    }
+    return result;
+  },
+
+  /**
+   * Analyze document content for governance/risk using AI
+   * NOTE: Path is /v2/ai/analyze (NOT /api/v2/ai/analyze)
+   * @param {Object} content - Document content
+   * @param {string} content.body - Main content text
+   * @param {string} [content.messageType] - 'communication' or 'policy'
+   * @param {string} [content.audience] - Target audience description
+   * @returns {Object} Analysis result with { data, usage } or { error, status }
+   */
+  analyzeContent(content) {
+    return this.fetch('/v2/ai/analyze', {
+      method: 'POST',
+      payload: {
+        content: content.body,
+        messageType: content.messageType || 'communication',
+        audience: content.audience || '',
+      },
+    });
+  },
+
+  /**
+   * Get AI suggestions for improving draft
+   * NOTE: Path is /v2/ai/suggest (NOT /api/v2/ai/suggest)
+   * @param {string} content - Current draft text
+   * @returns {Object} Suggestions with { data } or { error, status }
+   */
+  getAiSuggestions(content) {
+    return this.fetch('/v2/ai/suggest', {
+      method: 'POST',
+      payload: {
+        content: content,
+      },
+    });
+  },
+
+  /**
+   * Analyze message content with AI (legacy method)
+   * @deprecated Use analyzeContent() instead
    */
   analyzeMessage(content) {
     return this.fetch('/api/governance/analyze', {

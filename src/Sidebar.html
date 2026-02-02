@@ -206,6 +206,123 @@
       font-size: 12px;
       color: #1967d2;
     }
+
+    /* AI Section Styles */
+    .ai-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #dadce0;
+    }
+    .ai-section-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .ai-status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .ai-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9e9e9e;
+    }
+    .ai-status-dot.available {
+      background: #4caf50;
+    }
+    .ai-status-dot.unavailable {
+      background: #f44336;
+    }
+    .ai-button-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .ai-button-group .btn {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .btn-loading {
+      display: none;
+    }
+    .ai-score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .ai-score-card {
+      text-align: center;
+      padding: 12px 8px;
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+    .ai-score-value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .ai-score-label {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .ai-score-card.risk-low { background: #e8f5e9; }
+    .ai-score-card.risk-medium { background: #fff3e0; }
+    .ai-score-card.risk-high { background: #ffebee; }
+    .ai-risk-low { color: #2e7d32; }
+    .ai-risk-medium { color: #f57c00; }
+    .ai-risk-high { color: #c62828; font-weight: bold; }
+    .ai-results-section {
+      margin-bottom: 12px;
+    }
+    .ai-results-section h4 {
+      font-size: 12px;
+      color: #5f6368;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 0 8px 0;
+    }
+    .ai-results-section ul {
+      margin: 0;
+      padding-left: 16px;
+      font-size: 12px;
+    }
+    .ai-results-section li {
+      margin-bottom: 6px;
+    }
+    .ai-summary {
+      font-style: italic;
+      color: #666;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+    .ai-error-container {
+      text-align: center;
+      padding: 16px;
+      background: #fff3e0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .ai-error-container.limit {
+      background: #fce8e6;
+    }
+    .ai-error-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .ai-error-message {
+      font-size: 12px;
+      color: #5f6368;
+      margin-bottom: 12px;
+    }
+    .ai-error-container a {
+      color: #1a73e8;
+    }
   </style>
 </head>
 <body>
@@ -232,11 +349,254 @@
       loading: true,
       error: null,
       messageType: 'communication',
+      // AI-specific state
+      aiAvailable: false,
+      aiLoading: null, // 'analyze' | 'suggest' | null
+      aiResult: null,
+      aiError: null,
+      aiLimitExceeded: false,
     };
 
     document.addEventListener('DOMContentLoaded', () => {
       checkStatus();
+      checkAiAvailability();
     });
+
+    // ===== AI Functions =====
+
+    function checkAiAvailability() {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          state.aiAvailable = result && result.available === true;
+          render();
+        })
+        .withFailureHandler(function() {
+          state.aiAvailable = false;
+          render();
+        })
+        .checkAiHealth();
+    }
+
+    function runAiAnalysis() {
+      state.aiLoading = 'analyze';
+      state.aiResult = null;
+      state.aiError = null;
+      state.aiLimitExceeded = false;
+      render();
+
+      google.script.run
+        .withSuccessHandler(handleAiAnalysisResult)
+        .withFailureHandler(handleAiError)
+        .analyzeDocument();
+    }
+
+    function runAiSuggestions() {
+      state.aiLoading = 'suggest';
+      state.aiResult = null;
+      state.aiError = null;
+      state.aiLimitExceeded = false;
+      render();
+
+      google.script.run
+        .withSuccessHandler(handleAiSuggestionsResult)
+        .withFailureHandler(handleAiError)
+        .getAiSuggestions();
+    }
+
+    function handleAiAnalysisResult(result) {
+      state.aiLoading = null;
+
+      if (!result.success) {
+        if (result.error && result.error.code === 'limit_exceeded') {
+          state.aiLimitExceeded = true;
+        } else if (result.error && result.error.code === 'auth_expired') {
+          state.aiError = 'Your session has expired. Please reconnect your Vatessa account.';
+        } else {
+          state.aiError = (result.error && result.error.message) || 'Unable to analyze document.';
+        }
+        render();
+        // Focus on error for accessibility
+        setTimeout(function() {
+          var errorEl = document.getElementById('ai-error-container');
+          if (errorEl) errorEl.focus();
+        }, 100);
+        return;
+      }
+
+      state.aiResult = {
+        type: 'analyze',
+        data: result.data,
+        usage: result.usage,
+      };
+      render();
+    }
+
+    function handleAiSuggestionsResult(result) {
+      state.aiLoading = null;
+
+      if (!result.success) {
+        if (result.error && result.error.code === 'limit_exceeded') {
+          state.aiLimitExceeded = true;
+        } else if (result.error && result.error.code === 'auth_expired') {
+          state.aiError = 'Your session has expired. Please reconnect your Vatessa account.';
+        } else {
+          state.aiError = (result.error && result.error.message) || 'Unable to get suggestions.';
+        }
+        render();
+        // Focus on error for accessibility
+        setTimeout(function() {
+          var errorEl = document.getElementById('ai-error-container');
+          if (errorEl) errorEl.focus();
+        }, 100);
+        return;
+      }
+
+      state.aiResult = {
+        type: 'suggest',
+        data: result.data,
+      };
+      render();
+    }
+
+    function handleAiError(error) {
+      state.aiLoading = null;
+      state.aiError = 'Unable to connect to Vatessa. Please check your connection and try again.';
+      render();
+      // Focus on error for accessibility
+      setTimeout(function() {
+        var errorEl = document.getElementById('ai-error-container');
+        if (errorEl) errorEl.focus();
+      }, 100);
+    }
+
+    function retryAiAnalysis() {
+      state.aiError = null;
+      state.aiLimitExceeded = false;
+      runAiAnalysis();
+    }
+
+    function renderAiSection() {
+      var html = '<div class="ai-section">';
+      html += '<div class="ai-section-title">AI Analysis</div>';
+
+      // Status indicator
+      var statusClass = state.aiAvailable ? 'available' : 'unavailable';
+      var statusText = state.aiAvailable ? 'AI available' : 'AI temporarily unavailable';
+      html += '<div class="ai-status-indicator" id="ai-status" role="status" aria-live="polite">' +
+        '<span class="ai-status-dot ' + statusClass + '"></span>' +
+        '<span class="ai-status-text">' + statusText + '</span></div>';
+
+      // Button group
+      var analyzeDisabled = !state.aiAvailable || state.aiLoading;
+      var suggestDisabled = !state.aiAvailable || state.aiLoading;
+
+      html += '<div class="ai-button-group" role="group" aria-label="AI analysis actions">';
+
+      // Analyze button
+      html += '<button class="btn btn-primary" onclick="runAiAnalysis()" ' +
+        (analyzeDisabled ? 'disabled' : '') +
+        ' aria-describedby="ai-status"' +
+        (state.aiLoading === 'analyze' ? ' aria-busy="true"' : '') + '>' +
+        '<span class="btn-text"' + (state.aiLoading === 'analyze' ? ' style="display:none"' : '') + '>Analyze</span>' +
+        '<span class="btn-loading"' + (state.aiLoading === 'analyze' ? ' style="display:inline"' : '') + '>Analyzing...</span>' +
+        '</button>';
+
+      // Suggest button
+      html += '<button class="btn btn-secondary" onclick="runAiSuggestions()" ' +
+        (suggestDisabled ? 'disabled' : '') +
+        ' aria-describedby="ai-status"' +
+        (state.aiLoading === 'suggest' ? ' aria-busy="true"' : '') + '>' +
+        '<span class="btn-text"' + (state.aiLoading === 'suggest' ? ' style="display:none"' : '') + '>Suggestions</span>' +
+        '<span class="btn-loading"' + (state.aiLoading === 'suggest' ? ' style="display:inline"' : '') + '>Loading...</span>' +
+        '</button>';
+
+      html += '</div>';
+
+      // Error container
+      if (state.aiError) {
+        html += '<div class="ai-error-container" id="ai-error-container" role="alert" aria-live="assertive" tabindex="-1">' +
+          '<div class="ai-error-icon" aria-hidden="true">⚠️</div>' +
+          '<div class="ai-error-message">' + escapeHtml(state.aiError) + '</div>' +
+          '<button class="btn btn-secondary" onclick="retryAiAnalysis()">Try Again</button></div>';
+      }
+
+      // Limit exceeded container
+      if (state.aiLimitExceeded) {
+        html += '<div class="ai-error-container limit" id="ai-error-container" role="alert" aria-live="assertive" tabindex="-1">' +
+          '<div class="ai-error-icon" aria-hidden="true">📊</div>' +
+          '<div class="ai-error-message">Monthly AI limit reached. ' +
+          '<a href="https://vatessa.com/upgrade" target="_blank">Upgrade for unlimited access</a></div></div>';
+      }
+
+      // Results
+      if (state.aiResult && !state.aiError && !state.aiLimitExceeded) {
+        html += '<div class="ai-results" role="region" aria-label="AI analysis results" aria-live="polite">';
+
+        if (state.aiResult.type === 'analyze') {
+          var data = state.aiResult.data;
+
+          // Score grid
+          html += '<div class="ai-score-grid">';
+          html += '<div class="ai-score-card"><div class="ai-score-value">' +
+            (data.toneScore || '-') + '</div><div class="ai-score-label">Tone</div></div>';
+          html += '<div class="ai-score-card"><div class="ai-score-value">' +
+            (data.clarityScore || '-') + '</div><div class="ai-score-label">Clarity</div></div>';
+
+          var riskLevel = (data.riskLevel || 'low').toLowerCase();
+          var riskClass = 'risk-' + riskLevel;
+          html += '<div class="ai-score-card ' + riskClass + '"><div class="ai-score-value">' +
+            escapeHtml((data.riskLevel || 'Low').toUpperCase()) + '</div><div class="ai-score-label">Risk</div></div>';
+          html += '</div>';
+
+          // Risks
+          if (data.risks && data.risks.length > 0) {
+            html += '<div class="ai-results-section"><h4>Identified Risks</h4><ul>';
+            data.risks.forEach(function(r) {
+              var severityClass = 'ai-risk-' + escapeHtml(r.severity || 'low');
+              html += '<li class="' + severityClass + '">' + escapeHtml(r.description) + '</li>';
+            });
+            html += '</ul></div>';
+          }
+
+          // Suggestions from analyze (category, suggestion format)
+          if (data.suggestions && data.suggestions.length > 0) {
+            html += '<div class="ai-results-section"><h4>Suggestions</h4><ul>';
+            data.suggestions.forEach(function(s) {
+              html += '<li><strong>' + escapeHtml(s.category || 'General') + ':</strong> ' +
+                escapeHtml(s.suggestion) + '</li>';
+            });
+            html += '</ul></div>';
+          }
+
+          // Summary
+          if (data.summary) {
+            html += '<div class="ai-summary">' + escapeHtml(data.summary) + '</div>';
+          }
+
+        } else if (state.aiResult.type === 'suggest') {
+          // Suggestions from suggest endpoint (text, type format)
+          var data = state.aiResult.data;
+          if (data.suggestions && data.suggestions.length > 0) {
+            html += '<div class="ai-results-section"><h4>AI Suggestions</h4><ul>';
+            data.suggestions.forEach(function(s) {
+              var typeLabel = escapeHtml(s.type || 'suggestion');
+              html += '<li><strong>' + typeLabel + ':</strong> ' + escapeHtml(s.text) + '</li>';
+            });
+            html += '</ul></div>';
+          } else {
+            html += '<div class="ai-summary">No suggestions available for this content.</div>';
+          }
+        }
+
+        // Refresh button
+        html += '<button class="btn btn-secondary" onclick="runAiAnalysis()" style="font-size:12px;margin-top:8px;">Refresh Analysis</button>';
+
+        html += '</div>';
+      }
+
+      html += '</div>';
+      return html;
+    }
 
     function checkStatus() {
       google.script.run
@@ -450,7 +810,8 @@
         }
       }
 
-      html += '<button class="btn btn-secondary" onclick="loadAnalysis()">Analyze Now</button>';
+      // Add AI section (replaces old Analyze Now button)
+      html += renderAiSection();
 
       if (linked && status.status) {
         const apiStatus = status.status;
@@ -478,9 +839,8 @@
         }
       }
 
-      if (state.analysis) {
-        html += renderAnalysis(state.analysis);
-      }
+      // Note: Old analysis rendering removed - now using AI section above
+      // Legacy state.analysis kept for backward compatibility but not rendered
 
       html += '<div style="margin-top:24px;padding-top:16px;border-top:1px solid #dadce0;">' +
         '<button class="btn btn-secondary" onclick="disconnect()" style="font-size:12px;color:#5f6368;">Disconnect</button></div>';

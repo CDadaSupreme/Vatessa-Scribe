@@ -447,34 +447,221 @@ function getStoredMessageType() {
 }
 
 /**
- * Analyzes document content with Vatessa AI
+ * Validates content before sending to AI
+ * @param {string} content - Document content
+ * @returns {{ valid: boolean, error?: { code: string, message: string } }}
+ */
+function validateContent(content) {
+  if (!content || content.trim().length === 0) {
+    return {
+      valid: false,
+      error: {
+        code: 'content_empty',
+        message: 'Document is empty. Please add some content before analyzing.',
+      },
+    };
+  }
+
+  if (content.length > 50000) {
+    return {
+      valid: false,
+      error: {
+        code: 'content_too_long',
+        message: 'Document exceeds 50,000 characters (' + content.length.toLocaleString() + ' chars). Please shorten it before analyzing.',
+      },
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Checks if AI service is available
+ * Called from sidebar on load
+ * @returns {{ available: boolean }}
+ */
+function checkAiHealth() {
+  try {
+    return VatessaApi.checkAiHealth();
+  } catch (e) {
+    Logger.log('checkAiHealth error: ' + e.toString());
+    return { available: false };
+  }
+}
+
+/**
+ * Analyzes current document using AI
+ * Called from sidebar "Analyze" button
+ * @returns {Object} Analysis result or error object
  */
 function analyzeDocument() {
   try {
+    // Get document content
     var doc = DocumentApp.getActiveDocument();
+    var docProperties = PropertiesService.getDocumentProperties();
+    var messageType = docProperties.getProperty('vatessa_message_type') || 'communication';
+
     var content = {
-      name: doc.getName(),
-      content: doc.getBody().getText()
+      body: doc.getBody().getText(),
+      messageType: messageType,
+      audience: '',
     };
 
-    // Try to parse structured content
+    // Try to parse structured content for audience
     try {
       var structured = parseStructuredContent(doc.getBody());
-      Object.assign(content, structured);
+      if (structured.audience) content.audience = structured.audience;
     } catch (e) {
       Logger.log('Could not parse structured content: ' + e.toString());
     }
 
-    var analysis = VatessaApi.analyzeMessage(content);
+    // Client-side validation before API call
+    var validation = validateContent(content.body);
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+      };
+    }
+
+    // Call the AI analyze endpoint
+    var result = VatessaApi.analyzeContent(content);
+
+    // Handle specific error codes
+    if (result.error) {
+      // Handle 401 - token expired
+      if (result.status === 401) {
+        return {
+          success: false,
+          error: {
+            code: 'auth_expired',
+            message: 'Your session has expired. Please reconnect your Vatessa account.',
+          },
+        };
+      }
+      // Handle 429 - limit exceeded
+      if (result.status === 429) {
+        return {
+          success: false,
+          error: {
+            code: 'limit_exceeded',
+            message: result.error.message || 'Monthly AI limit reached.',
+          },
+        };
+      }
+      // Handle 503 - unavailable
+      if (result.status === 503) {
+        return {
+          success: false,
+          error: {
+            code: 'unavailable',
+            message: 'AI analysis is temporarily unavailable. You can still send for manual review.',
+          },
+        };
+      }
+      return {
+        success: false,
+        error: result.error,
+      };
+    }
+
     return {
       success: true,
-      analysis: analysis
+      data: result.data,
+      usage: result.usage,
     };
-  } catch (error) {
-    Logger.log('analyzeDocument error: ' + error.toString());
+
+  } catch (e) {
+    Logger.log('AI analysis error: ' + e.toString());
     return {
       success: false,
-      error: error.toString()
+      error: {
+        code: 'api_error',
+        message: 'Unable to analyze document. Please try again.',
+      },
     };
   }
+}
+
+/**
+ * Gets AI suggestions for current document
+ * Called from sidebar "Get Suggestions" button
+ * @returns {Object} Suggestions or error object
+ */
+function getAiSuggestions() {
+  try {
+    var doc = DocumentApp.getActiveDocument();
+    var content = doc.getBody().getText();
+
+    // Client-side validation before API call
+    var validation = validateContent(content);
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+      };
+    }
+
+    var result = VatessaApi.getAiSuggestions(content);
+
+    // Handle specific error codes
+    if (result.error) {
+      // Handle 401 - token expired
+      if (result.status === 401) {
+        return {
+          success: false,
+          error: {
+            code: 'auth_expired',
+            message: 'Your session has expired. Please reconnect your Vatessa account.',
+          },
+        };
+      }
+      // Handle 429 - limit exceeded
+      if (result.status === 429) {
+        return {
+          success: false,
+          error: {
+            code: 'limit_exceeded',
+            message: result.error.message || 'Monthly AI limit reached.',
+          },
+        };
+      }
+      // Handle 503 - unavailable
+      if (result.status === 503) {
+        return {
+          success: false,
+          error: {
+            code: 'unavailable',
+            message: 'AI suggestions are temporarily unavailable.',
+          },
+        };
+      }
+      return {
+        success: false,
+        error: result.error,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+
+  } catch (e) {
+    Logger.log('AI suggestions error: ' + e.toString());
+    return {
+      success: false,
+      error: {
+        code: 'api_error',
+        message: 'Unable to get suggestions. Please try again.',
+      },
+    };
+  }
+}
+
+/**
+ * Refreshes AI analysis (called from sidebar refresh button)
+ */
+function refreshAnalysis() {
+  return analyzeDocument();
 }

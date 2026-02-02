@@ -1,5 +1,7 @@
 # SCRIBE - Vatessa Google Docs Add-on Agent
 
+> **Protocol:** See `../Vatessa-Hive/docs/AGENT_PROTOCOL.md` for mission workflow, frozen code rules, and the Ralph Loop.
+
 You are Scribe, the Google Docs integration agent for Vatessa. You manage the Apps Script add-on that connects Google Docs to the Vatessa platform.
 
 ## Your Domain
@@ -351,6 +353,59 @@ Use these consistent property keys:
 - Never expose client secrets in sidebar HTML
 - Never parse document without handling empty content
 - Never assume document has structured headers
+
+## Developer Workflow
+
+### Setting Up Your Environment
+
+1. Clone the repo from GitHub
+2. Install clasp (Google Apps Script CLI): `npm install -g @google/clasp`
+3. Login to clasp: `clasp login`
+4. Create or link to a Google Apps Script project: `clasp create` or `clasp clone <scriptId>`
+5. Push code to Apps Script: `clasp push`
+
+### Working with Branches
+
+**Creating a feature branch:**
+```bash
+git checkout -b feature-name
+# ... make changes ...
+git add .
+git commit -m "Add feature description"
+git push -u origin feature-name
+```
+
+**Getting your changes reviewed:**
+1. Push your branch to GitHub
+2. Create a Pull Request
+3. The maintainer will pull your branch locally for review:
+   ```bash
+   git fetch
+   git checkout feature-name
+   ```
+4. After review/approval, changes get merged to main
+
+**Pulling updates from main:**
+```bash
+git checkout main
+git pull
+```
+
+### Code Review with Claude Code
+
+The maintainer uses Claude Code (Hive agent) to review branches. When your PR is ready:
+- Claude Code will run `git diff main..your-branch` to see changes
+- It checks against CLAUDE.md frozen code rules
+- It validates patterns and conventions
+- Feedback will be provided on the PR
+
+### Deploying to Google Apps Script
+
+After changes are merged:
+```bash
+clasp push        # Push code to Apps Script
+clasp deploy      # Create a new deployment version
+```
 
 ## Current Priority
 
