@@ -134,14 +134,16 @@ function getDocumentStatus() {
     try {
       var apiStatus = getMessageStatus(messageId);
 
-      // Edge case 2: Message not found (unlinked in Vatessa)
-      if (!apiStatus) {
+      // Edge case 2: Message not found or API error
+      if (!apiStatus || apiStatus.error) {
+        Logger.log('getMessageStatus failed: ' + JSON.stringify(apiStatus));
         docProperties.deleteAllProperties();
         return {
           linked: false,
           documentId: docId,
           documentName: docTitle,
-          wasUnlinked: true
+          wasUnlinked: true,
+          apiError: apiStatus ? apiStatus.error : null
         };
       }
 

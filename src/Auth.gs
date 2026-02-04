@@ -1,58 +1,263 @@
 /**
- * Vatessa OAuth2 Authentication
- * Handles OAuth flow with Vatessa backend
+ * Vatessa Personal Access Token Authentication
+ * Simple token-based auth for Google Docs addon
+ *
+ * Users generate a PAT in Vatessa web app and paste it here.
+ * Tokens are stored securely in user properties.
  */
 
-// OAuth2 configuration
-const OAUTH_CONFIG = {
-  clientId: getClientId(),
-  clientSecret: getClientSecret(),
-  authorizationBaseUrl: 'https://vatessa.com/oauth/authorize',
-  tokenUrl: 'https://api.vatessa.com/oauth/token',
-  scope: 'messages:read messages:write analysis:read',
-};
+// Property key for storing the token
+const TOKEN_PROPERTY_KEY = 'vatessa_access_token';
 
 /**
- * Gets the OAuth2 service
+ * Gets the stored access token
+ * @returns {string|null} The access token or null if not set
  */
 function getOAuthService() {
-  return OAuth2.createService('vatessa')
-    .setAuthorizationBaseUrl(OAUTH_CONFIG.authorizationBaseUrl)
-    .setTokenUrl(OAUTH_CONFIG.tokenUrl)
-    .setClientId(OAUTH_CONFIG.clientId)
-    .setClientSecret(OAUTH_CONFIG.clientSecret)
-    .setCallbackFunction('authCallback')
-    .setPropertyStore(PropertiesService.getUserProperties())
-    .setScope(OAUTH_CONFIG.scope)
-    .setParam('access_type', 'offline')
-    .setParam('prompt', 'consent');
+  // Compatibility shim - returns object with hasAccess() for existing code
+  return {
+    hasAccess: function() {
+      return !!getAccessToken();
+    },
+    getAccessToken: function() {
+      return getAccessToken();
+    },
+    reset: function() {
+      clearAccessToken();
+    }
+  };
 }
 
 /**
- * Initiates OAuth flow with Vatessa
+ * Gets the stored access token
+ * @returns {string|null} The access token or null if not set
+ */
+function getAccessToken() {
+  const props = PropertiesService.getUserProperties();
+  return props.getProperty(TOKEN_PROPERTY_KEY);
+}
+
+/**
+ * Stores the access token
+ * @param {string} token - The PAT to store
+ */
+function setAccessToken(token) {
+  const props = PropertiesService.getUserProperties();
+  props.setProperty(TOKEN_PROPERTY_KEY, token);
+}
+
+/**
+ * Clears the stored access token
+ */
+function clearAccessToken() {
+  const props = PropertiesService.getUserProperties();
+  props.deleteProperty(TOKEN_PROPERTY_KEY);
+}
+
+/**
+ * Validates a token by making a test API call
+ * @param {string} token - The token to validate
+ * @returns {Object} Validation result { valid: boolean, error?: string }
+ */
+function validateToken(token) {
+  if (!token || !token.startsWith('pat_')) {
+    return {
+      valid: false,
+      error: 'Invalid token format. Token should start with "pat_"'
+    };
+  }
+
+  try {
+    // Make a test call to check AI health (lightweight endpoint)
+    const response = UrlFetchApp.fetch(VatessaApi.BASE_URL + '/v2/ai/health', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      muteHttpExceptions: true,
+    });
+
+    const code = response.getResponseCode();
+
+    if (code === 401) {
+      return { valid: false, error: 'Invalid or expired token' };
+    }
+
+    if (code === 403) {
+      return { valid: false, error: 'Token does not have required permissions' };
+    }
+
+    if (code >= 200 && code < 300) {
+      return { valid: true };
+    }
+
+    return { valid: false, error: 'Unable to verify token (status: ' + code + ')' };
+  } catch (e) {
+    Logger.log('Token validation error: ' + e.toString());
+    return { valid: false, error: 'Network error: ' + e.message };
+  }
+}
+
+/**
+ * Connects to Vatessa using a Personal Access Token
+ * Called from the sidebar when user submits their token
+ * @param {string} token - The PAT from Vatessa
+ * @returns {Object} Connection result
+ */
+function connectWithToken(token) {
+  // Validate the token first
+  var validation = validateToken(token);
+
+  if (!validation.valid) {
+    return {
+      success: false,
+      error: validation.error
+    };
+  }
+
+  // Token is valid, store it
+  setAccessToken(token);
+
+  return {
+    success: true,
+    message: 'Successfully connected to Vatessa'
+  };
+}
+
+/**
+ * Get connection status
+ * @returns {Object} Connection status { connected: boolean, messageId?: string }
+ */
+function getConnectionStatus() {
+  const token = getAccessToken();
+  const messageId = PropertiesService.getDocumentProperties()
+    .getProperty('vatessa_message_id');
+
+  return {
+    connected: !!token,
+    messageId: messageId,
+  };
+}
+
+/**
+ * Disconnects from Vatessa (clears token)
+ * @returns {Object} Disconnect result
+ */
+function disconnect() {
+  clearAccessToken();
+  return { success: true };
+}
+
+/**
+ * Resets OAuth (clears token) - compatibility function
+ */
+function resetOAuth() {
+  clearAccessToken();
+}
+
+/**
+ * Legacy auth function for backward compatibility
+ */
+function getAuthToken() {
+  return getAccessToken();
+}
+
+/**
+ * Legacy auth function for backward compatibility
+ */
+function setAuthToken(token) {
+  setAccessToken(token);
+}
+
+/**
+ * Legacy auth function for backward compatibility
+ */
+function clearAuthToken() {
+  clearAccessToken();
+}
+
+/**
+ * Shows the token setup dialog
+ * Called when user needs to connect to Vatessa
+ */
+function showTokenSetup() {
+  var html = HtmlService.createHtmlOutput(
+    '<html><head>' +
+    '<style>' +
+    'body { font-family: "Google Sans", Arial, sans-serif; padding: 20px; }' +
+    'h3 { color: #4F46E5; margin-bottom: 16px; }' +
+    'p { color: #5f6368; margin: 12px 0; font-size: 13px; }' +
+    'input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 12px; }' +
+    'button { background: #4F46E5; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 12px; }' +
+    'button:hover { background: #4338CA; }' +
+    '.steps { background: #f8f9fa; padding: 12px; border-radius: 4px; margin: 16px 0; }' +
+    '.steps li { margin: 8px 0; color: #333; }' +
+    '.error { color: #d93025; margin-top: 8px; display: none; }' +
+    '</style>' +
+    '</head><body>' +
+    '<h3>Connect to Vatessa</h3>' +
+    '<div class="steps">' +
+    '<p><strong>To get your access token:</strong></p>' +
+    '<ol>' +
+    '<li>Go to <a href="https://app.vatessa.com/settings/tokens" target="_blank">Vatessa Settings → API Tokens</a></li>' +
+    '<li>Click "Generate New Token"</li>' +
+    '<li>Name it "Google Docs"</li>' +
+    '<li>Copy the token and paste below</li>' +
+    '</ol>' +
+    '</div>' +
+    '<input type="text" id="token" placeholder="pat_xxxxx..." />' +
+    '<p class="error" id="error"></p>' +
+    '<button onclick="connect()">Connect</button>' +
+    '<script>' +
+    'function connect() {' +
+    '  var token = document.getElementById("token").value.trim();' +
+    '  if (!token) {' +
+    '    showError("Please enter your access token");' +
+    '    return;' +
+    '  }' +
+    '  document.querySelector("button").disabled = true;' +
+    '  document.querySelector("button").textContent = "Connecting...";' +
+    '  google.script.run' +
+    '    .withSuccessHandler(function(result) {' +
+    '      if (result.success) {' +
+    '        google.script.host.close();' +
+    '      } else {' +
+    '        showError(result.error || "Connection failed");' +
+    '        document.querySelector("button").disabled = false;' +
+    '        document.querySelector("button").textContent = "Connect";' +
+    '      }' +
+    '    })' +
+    '    .withFailureHandler(function(err) {' +
+    '      showError(err.message || "Connection failed");' +
+    '      document.querySelector("button").disabled = false;' +
+    '      document.querySelector("button").textContent = "Connect";' +
+    '    })' +
+    '    .connectWithToken(token);' +
+    '}' +
+    'function showError(msg) {' +
+    '  var el = document.getElementById("error");' +
+    '  el.textContent = msg;' +
+    '  el.style.display = "block";' +
+    '}' +
+    '</script>' +
+    '</body></html>'
+  )
+    .setWidth(450)
+    .setHeight(420);
+  DocumentApp.getUi().showModalDialog(html, 'Connect to Vatessa');
+}
+
+/**
+ * Initiates connection flow
+ * Shows token setup dialog if not connected
+ * @returns {Object} Auth status
  */
 function initiateOAuth() {
-  const service = getOAuthService();
+  var token = getAccessToken();
 
-  if (!service.hasAccess()) {
-    const authUrl = service.getAuthorizationUrl();
-    const html = HtmlService.createHtmlOutput(
-      '<html><head>' +
-      '<style>' +
-      'body { font-family: "Google Sans", Arial, sans-serif; padding: 20px; text-align: center; }' +
-      'a { color: #1a73e8; text-decoration: none; font-weight: 500; }' +
-      'a:hover { text-decoration: underline; }' +
-      'p { color: #5f6368; margin: 16px 0; }' +
-      '</style>' +
-      '</head><body>' +
-      '<p>Please authorize Vatessa to access your account:</p>' +
-      '<p><a href="' + authUrl + '" target="_blank">Connect to Vatessa</a></p>' +
-      '<p style="font-size: 12px;">After authorizing, close this window and refresh the sidebar.</p>' +
-      '</body></html>'
-    )
-      .setWidth(400)
-      .setHeight(200);
-    DocumentApp.getUi().showModalDialog(html, 'Connect to Vatessa');
+  if (!token) {
+    showTokenSetup();
     return { success: false, needsAuth: true };
   }
 
@@ -60,106 +265,9 @@ function initiateOAuth() {
 }
 
 /**
- * OAuth callback handler
+ * Gets the Vatessa web app URL
+ * @returns {string} The Vatessa URL
  */
-function authCallback(request) {
-  const service = getOAuthService();
-  const authorized = service.handleCallback(request);
-
-  if (authorized) {
-    return HtmlService.createHtmlOutput(
-      '<html><head>' +
-      '<style>' +
-      'body { font-family: "Google Sans", Arial, sans-serif; padding: 40px; text-align: center; }' +
-      '.success { color: #188038; font-size: 24px; margin-bottom: 16px; }' +
-      'p { color: #5f6368; }' +
-      '</style>' +
-      '</head><body>' +
-      '<div class="success">&#10003; Connected!</div>' +
-      '<p>You can close this window and return to Google Docs.</p>' +
-      '<p>Refresh the sidebar to see your Vatessa connection.</p>' +
-      '</body></html>'
-    );
-  } else {
-    return HtmlService.createHtmlOutput(
-      '<html><head>' +
-      '<style>' +
-      'body { font-family: "Google Sans", Arial, sans-serif; padding: 40px; text-align: center; }' +
-      '.error { color: #d93025; font-size: 24px; margin-bottom: 16px; }' +
-      'p { color: #5f6368; }' +
-      '</style>' +
-      '</head><body>' +
-      '<div class="error">&#10007; Authorization Failed</div>' +
-      '<p>Please close this window and try again.</p>' +
-      '</body></html>'
-    );
-  }
-}
-
-/**
- * Get connection status
- */
-function getConnectionStatus() {
-  const service = getOAuthService();
-  const messageId = PropertiesService.getDocumentProperties()
-    .getProperty('vatessa_message_id');
-
-  return {
-    connected: service.hasAccess(),
-    messageId: messageId,
-  };
-}
-
-/**
- * Resets OAuth (logout)
- */
-function resetOAuth() {
-  const service = getOAuthService();
-  service.reset();
-}
-
-/**
- * Disconnects from Vatessa
- */
-function disconnect() {
-  resetOAuth();
-  return { success: true };
-}
-
-/**
- * Gets client ID from script properties
- * Store this in Script Properties in the Apps Script editor
- */
-function getClientId() {
-  const props = PropertiesService.getScriptProperties();
-  return props.getProperty('VATESSA_CLIENT_ID') || '';
-}
-
-/**
- * Gets client secret from script properties
- * Store this in Script Properties in the Apps Script editor
- */
-function getClientSecret() {
-  const props = PropertiesService.getScriptProperties();
-  return props.getProperty('VATESSA_CLIENT_SECRET') || '';
-}
-
-/**
- * Legacy auth functions for backward compatibility
- */
-function getAuthToken() {
-  const service = getOAuthService();
-  if (service.hasAccess()) {
-    return service.getAccessToken();
-  }
-  return null;
-}
-
-function setAuthToken(token) {
-  // OAuth2 library handles token storage
-  Logger.log('setAuthToken called - OAuth2 handles this automatically');
-}
-
-function clearAuthToken() {
-  resetOAuth();
+function getVatessaUrl() {
+  return 'https://app.vatessa.com';
 }

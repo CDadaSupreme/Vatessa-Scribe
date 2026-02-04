@@ -774,7 +774,7 @@
 
       let html = '';
       const status = state.status || {};
-      const linked = status.linked;
+      const linked = status.linked || state.messageId;  // Use messageId as fallback
       const hasChanges = status.hasChanges;
 
       html += '<div class="status-card">' +

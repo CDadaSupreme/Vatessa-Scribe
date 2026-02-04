@@ -4,8 +4,8 @@
  */
 
 const VatessaApi = {
-  BASE_URL: 'https://api.vatessa.com',
-  // BASE_URL: 'http://localhost:3000',  // Development
+  // BASE_URL: 'https://api.vatessa.com',  // Production
+  BASE_URL: 'https://triumphal-ember-endogenous.ngrok-free.dev',  // Development
 
   /**
    * Get auth token from OAuth service
@@ -144,7 +144,7 @@ const VatessaApi = {
    * @deprecated Use analyzeContent() instead
    */
   analyzeMessage(content) {
-    return this.fetch('/api/governance/analyze', {
+    return this.fetch('/v2/ai/analyze', {
       method: 'POST',
       payload: {
         title: content.title || content.name,
@@ -152,7 +152,7 @@ const VatessaApi = {
         audience: content.audience || '',
         audienceSize: content.audienceSize || 0,
         keyPoints: content.keyPoints || '',
-        body: content.content,
+        content: content.content,
         tone: content.tone || 'professional',
       },
     });
@@ -164,7 +164,7 @@ const VatessaApi = {
    * @param {string} messageType - 'communication' or 'policy'
    */
   createMessage(content, messageType) {
-    return this.fetch('/api/messages', {
+    return this.fetch('/v2/messages', {
       method: 'POST',
       payload: {
         title: content.title || content.name,
@@ -172,9 +172,9 @@ const VatessaApi = {
         audience: content.audience || '',
         audienceSize: content.audienceSize || 0,
         keyPoints: content.keyPoints || '',
-        body: content.content,
+        content: content.content,
         tone: content.tone || 'professional',
-        message_type: messageType || 'communication',
+        messageType: messageType || 'communication',
         sourceType: 'google_docs',
         sourceId: content.id,
       },
@@ -185,7 +185,7 @@ const VatessaApi = {
    * Update existing message
    */
   updateMessage(messageId, content) {
-    return this.fetch('/api/messages/' + messageId, {
+    return this.fetch('/v2/messages/' + messageId, {
       method: 'PUT',
       payload: {
         title: content.title || content.name,
@@ -193,7 +193,7 @@ const VatessaApi = {
         audience: content.audience || '',
         audienceSize: content.audienceSize || 0,
         keyPoints: content.keyPoints || '',
-        body: content.content,
+        content: content.content,
       },
     });
   },
@@ -202,7 +202,7 @@ const VatessaApi = {
    * Get message status
    */
   getMessageStatus(messageId) {
-    return this.fetch('/api/messages/' + messageId);
+    return this.fetch('/v2/messages/' + messageId);
   },
 
   /**
@@ -210,7 +210,7 @@ const VatessaApi = {
    */
   checkDocumentLinked(docId) {
     try {
-      return this.fetch('/api/documents/google/' + docId);
+      return this.fetch('/v2/documents/google/' + docId);
     } catch (error) {
       if (error.message === 'AUTH_EXPIRED' || error.message.includes('Not authenticated')) {
         return { linked: false, authRequired: true };
@@ -226,7 +226,7 @@ const VatessaApi = {
    * Submit message for review
    */
   submitForReview(messageId, syncFirst) {
-    return this.fetch('/api/messages/' + messageId + '/submit', {
+    return this.fetch('/v2/messages/' + messageId + '/submit', {
       method: 'POST',
       payload: {
         syncFirst: syncFirst !== false,
@@ -240,7 +240,7 @@ const VatessaApi = {
   linkDocument(messageId, docId, docUrl) {
     const hash = generateContentHash();
 
-    const result = this.fetch('/api/messages/' + messageId + '/link-document', {
+    const result = this.fetch('/v2/messages/' + messageId + '/link-document', {
       method: 'POST',
       payload: {
         documentId: docId,
@@ -264,7 +264,7 @@ const VatessaApi = {
    * Unlink document from message
    */
   unlinkDocument(messageId) {
-    return this.fetch('/api/messages/' + messageId + '/unlink-document', {
+    return this.fetch('/v2/messages/' + messageId + '/unlink-document', {
       method: 'DELETE',
     });
   },
