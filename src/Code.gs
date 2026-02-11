@@ -667,3 +667,268 @@ function getAiSuggestions() {
 function refreshAnalysis() {
   return analyzeDocument();
 }
+
+/**
+ * Gets the currently selected text in the document
+ * @returns {{ text: string, hasSelection: boolean }}
+ */
+function getSelectedText() {
+  var doc = DocumentApp.getActiveDocument();
+  var selection = doc.getSelection();
+
+  if (!selection) {
+    return { text: '', hasSelection: false };
+  }
+
+  var elements = selection.getRangeElements();
+  var textParts = [];
+
+  for (var i = 0; i < elements.length; i++) {
+    var element = elements[i];
+    var el = element.getElement();
+
+    if (el.editAsText) {
+      var text = el.editAsText().getText();
+      if (element.isPartial()) {
+        var start = element.getStartOffset();
+        var end = element.getEndOffsetInclusive();
+        text = text.substring(start, end + 1);
+      }
+      if (text) {
+        textParts.push(text);
+      }
+    }
+  }
+
+  var fullText = textParts.join('\n');
+  return { text: fullText, hasSelection: fullText.length > 0 };
+}
+
+/**
+ * Validates content before sending to rewrite endpoint
+ * @param {string} content - Content to validate
+ * @returns {{ valid: boolean, error?: { code: string, message: string } }}
+ */
+function validateRewriteContent(content) {
+  if (!content || content.trim().length === 0) {
+    return {
+      valid: false,
+      error: {
+        code: 'content_empty',
+        message: 'No text to rewrite. Select text or add content to your document.',
+      },
+    };
+  }
+
+  if (content.length > 10000) {
+    return {
+      valid: false,
+      error: {
+        code: 'content_too_long',
+        message: 'Text exceeds 10,000 characters (' + content.length.toLocaleString() + ' chars). Please select a shorter section.',
+      },
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Rewrites text using AI
+ * Called from sidebar Polish buttons
+ * @param {string} action - 'shorten' | 'formal' | 'casual' | 'simplify' | 'compliance'
+ * @returns {Object} Rewrite result or error object
+ */
+function rewriteText(action) {
+  try {
+    // Try selected text first, fall back to full document
+    var selected = getSelectedText();
+    var content;
+    var hasSelection;
+
+    if (selected.hasSelection) {
+      content = selected.text;
+      hasSelection = true;
+    } else {
+      var doc = DocumentApp.getActiveDocument();
+      content = doc.getBody().getText();
+      hasSelection = false;
+    }
+
+    // Validate content
+    var validation = validateRewriteContent(content);
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+      };
+    }
+
+    // Build context from document properties
+    var docProperties = PropertiesService.getDocumentProperties();
+    var messageType = docProperties.getProperty('vatessa_message_type') || 'communication';
+    var context = {
+      messageType: messageType,
+    };
+
+    // Try to extract audience from structured content
+    try {
+      var doc = DocumentApp.getActiveDocument();
+      var structured = parseStructuredContent(doc.getBody());
+      if (structured.audience) {
+        context.audience = structured.audience;
+      }
+    } catch (e) {
+      Logger.log('Could not parse structured content for rewrite: ' + e.toString());
+    }
+
+    // Call the rewrite endpoint
+    var result = VatessaApi.rewriteContent(content, action, context);
+
+    // Handle specific error codes
+    if (result.error) {
+      if (result.status === 401) {
+        return {
+          success: false,
+          error: {
+            code: 'auth_expired',
+            message: 'Your session has expired. Please reconnect your Vatessa account.',
+          },
+        };
+      }
+      if (result.status === 403) {
+        return {
+          success: false,
+          error: {
+            code: 'tier_required',
+            message: 'AI Polish requires a Business tier plan.',
+          },
+        };
+      }
+      if (result.status === 429) {
+        return {
+          success: false,
+          error: {
+            code: 'limit_exceeded',
+            message: result.error.message || 'Monthly AI limit reached.',
+          },
+        };
+      }
+      if (result.status === 503) {
+        return {
+          success: false,
+          error: {
+            code: 'unavailable',
+            message: 'AI Polish is temporarily unavailable. Please try again later.',
+          },
+        };
+      }
+      return {
+        success: false,
+        error: result.error,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+      hasSelection: hasSelection,
+    };
+
+  } catch (e) {
+    Logger.log('rewriteText error: ' + e.toString());
+    return {
+      success: false,
+      error: {
+        code: 'api_error',
+        message: 'Unable to rewrite text. Please try again.',
+      },
+    };
+  }
+}
+
+/**
+ * Applies rewritten text back to the document
+ * @param {string} rewrittenText - The rewritten text to apply
+ * @param {boolean} replaceSelection - If true, replace current selection; if false, replace full body
+ * @returns {{ success: boolean, error?: string }}
+ */
+function applyRewrite(rewrittenText, replaceSelection) {
+  try {
+    var doc = DocumentApp.getActiveDocument();
+
+    if (replaceSelection) {
+      var selection = doc.getSelection();
+      if (!selection) {
+        // Selection lost — fall back to full body replace
+        doc.getBody().setText(rewrittenText);
+        return { success: true };
+      }
+
+      var elements = selection.getRangeElements();
+
+      if (elements.length === 1) {
+        // Single element selection
+        var element = elements[0];
+        var el = element.getElement();
+        var text = el.editAsText();
+
+        if (element.isPartial()) {
+          var start = element.getStartOffset();
+          var end = element.getEndOffsetInclusive();
+          text.deleteText(start, end);
+          text.insertText(start, rewrittenText);
+        } else {
+          text.setText(rewrittenText);
+        }
+      } else {
+        // Multi-element selection: clear middle elements, replace first
+        var firstElement = elements[0];
+        var firstText = firstElement.getElement().editAsText();
+
+        // Clear middle and last elements (reverse order to preserve indices)
+        for (var i = elements.length - 1; i > 0; i--) {
+          var midEl = elements[i].getElement();
+          if (midEl.getParent()) {
+            midEl.getParent().removeChild(midEl);
+          }
+        }
+
+        // Replace text in first element
+        if (firstElement.isPartial()) {
+          var start = firstElement.getStartOffset();
+          var fullText = firstText.getText();
+          firstText.deleteText(start, fullText.length - 1);
+          firstText.insertText(start, rewrittenText);
+        } else {
+          firstText.setText(rewrittenText);
+        }
+      }
+    } else {
+      // Replace full document body
+      doc.getBody().setText(rewrittenText);
+    }
+
+    return { success: true };
+
+  } catch (e) {
+    Logger.log('applyRewrite error: ' + e.toString());
+    return {
+      success: false,
+      error: 'Failed to apply rewrite: ' + e.toString(),
+    };
+  }
+}
+
+/**
+ * Sends feedback for a rewrite action (fire-and-forget)
+ * @param {string} rewriteId - ID from rewrite response
+ * @param {string} feedbackAction - 'applied_replace' | 'copied' | 'dismissed'
+ */
+function sendRewriteFeedback(rewriteId, feedbackAction) {
+  try {
+    VatessaApi.sendRewriteFeedback(rewriteId, feedbackAction);
+  } catch (e) {
+    Logger.log('sendRewriteFeedback error (silent): ' + e.toString());
+  }
+}

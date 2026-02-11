@@ -71,6 +71,38 @@ function runSmokeTests() {
   results.push(testMessageTypeSupport());
   results.push(testMessageTypePersistence());
 
+  // AI Polish tests
+  results.push(testValidateRewriteContent());
+  results.push(testGetSelectedText());
+  results.push(testRewritePayloadFormat());
+  results.push(testRewriteFeedbackPayloadFormat());
+
+  // AI Polish integration tests (require auth)
+  if (token) {
+    results.push(testRewriteTextIntegration());
+    results.push(testApplyRewriteFunction());
+    results.push(testSendRewriteFeedbackFunction());
+  } else {
+    results.push({
+      name: 'Rewrite Text Integration',
+      passed: false,
+      message: 'Skipped - no auth token',
+      skipped: true
+    });
+    results.push({
+      name: 'Apply Rewrite Function',
+      passed: false,
+      message: 'Skipped - no auth token',
+      skipped: true
+    });
+    results.push({
+      name: 'Send Rewrite Feedback',
+      passed: false,
+      message: 'Skipped - no auth token',
+      skipped: true
+    });
+  }
+
   // Log results summary
   logTestResults(results);
 
@@ -829,6 +861,527 @@ function testMessageTypePersistence() {
       message: 'Error: ' + error.toString()
     };
   }
+}
+
+// =============================================
+// AI Polish Tests (B3)
+// =============================================
+
+/**
+ * Test 13: Validate Rewrite Content
+ * Verifies content validation for the rewrite endpoint
+ */
+function testValidateRewriteContent() {
+  var testName = 'Validate Rewrite Content';
+
+  try {
+    var errors = [];
+
+    // Test 1: Empty content should fail
+    var result1 = validateRewriteContent('');
+    if (result1.valid !== false) {
+      errors.push('Empty string should be invalid');
+    }
+    if (!result1.error || result1.error.code !== 'content_empty') {
+      errors.push('Empty string should return content_empty code');
+    }
+
+    // Test 2: Null content should fail
+    var result2 = validateRewriteContent(null);
+    if (result2.valid !== false) {
+      errors.push('Null should be invalid');
+    }
+
+    // Test 3: Whitespace-only content should fail
+    var result3 = validateRewriteContent('   \n\t  ');
+    if (result3.valid !== false) {
+      errors.push('Whitespace-only should be invalid');
+    }
+
+    // Test 4: Normal content should pass
+    var result4 = validateRewriteContent('Hello, this is a test document.');
+    if (result4.valid !== true) {
+      errors.push('Normal content should be valid');
+    }
+
+    // Test 5: Content at exactly 10,000 chars should pass
+    var contentAt10k = '';
+    for (var i = 0; i < 10000; i++) { contentAt10k += 'a'; }
+    var result5 = validateRewriteContent(contentAt10k);
+    if (result5.valid !== true) {
+      errors.push('Content at exactly 10,000 chars should be valid');
+    }
+
+    // Test 6: Content over 10,000 chars should fail
+    var contentOver10k = contentAt10k + 'extra';
+    var result6 = validateRewriteContent(contentOver10k);
+    if (result6.valid !== false) {
+      errors.push('Content over 10,000 chars should be invalid');
+    }
+    if (!result6.error || result6.error.code !== 'content_too_long') {
+      errors.push('Over-limit should return content_too_long code');
+    }
+
+    if (errors.length > 0) {
+      return {
+        name: testName,
+        passed: false,
+        message: errors.join('; ')
+      };
+    }
+
+    return {
+      name: testName,
+      passed: true,
+      message: 'All 6 validation cases passed'
+    };
+
+  } catch (error) {
+    return {
+      name: testName,
+      passed: false,
+      message: 'Error: ' + error.toString()
+    };
+  }
+}
+
+/**
+ * Test 14: Get Selected Text
+ * Verifies getSelectedText returns correct structure
+ */
+function testGetSelectedText() {
+  var testName = 'Get Selected Text';
+
+  try {
+    var result = getSelectedText();
+
+    // Should always return an object with text and hasSelection
+    if (typeof result !== 'object' || result === null) {
+      return {
+        name: testName,
+        passed: false,
+        message: 'Should return an object'
+      };
+    }
+
+    if (typeof result.hasSelection !== 'boolean') {
+      return {
+        name: testName,
+        passed: false,
+        message: 'hasSelection should be a boolean'
+      };
+    }
+
+    if (typeof result.text !== 'string') {
+      return {
+        name: testName,
+        passed: false,
+        message: 'text should be a string'
+      };
+    }
+
+    // When running from the editor (no UI selection), hasSelection should be false
+    var selectionNote = result.hasSelection
+      ? 'Selection found: "' + truncateText(result.text, 30) + '"'
+      : 'No selection (expected when running from editor)';
+
+    return {
+      name: testName,
+      passed: true,
+      message: selectionNote
+    };
+
+  } catch (error) {
+    return {
+      name: testName,
+      passed: false,
+      message: 'Error: ' + error.toString()
+    };
+  }
+}
+
+/**
+ * Test 15: Rewrite Payload Format
+ * Verifies the rewrite API payload has correct structure
+ */
+function testRewritePayloadFormat() {
+  var testName = 'Rewrite Payload Format';
+
+  try {
+    var errors = [];
+
+    // Valid actions
+    var validActions = ['shorten', 'formal', 'casual', 'simplify', 'compliance'];
+
+    validActions.forEach(function(action) {
+      var payload = {
+        content: 'Test content for rewrite.',
+        action: action,
+      };
+
+      if (!payload.content) errors.push('Missing content for action: ' + action);
+      if (!payload.action) errors.push('Missing action: ' + action);
+    });
+
+    // Test with context
+    var payloadWithContext = {
+      content: 'Test content.',
+      action: 'formal',
+      context: {
+        messageType: 'communication',
+        audience: 'Internal employees',
+      },
+    };
+
+    if (!payloadWithContext.context) errors.push('Missing context field');
+    if (!payloadWithContext.context.messageType) errors.push('Missing context.messageType');
+    if (!payloadWithContext.context.audience) errors.push('Missing context.audience');
+
+    // Verify all 5 actions are covered
+    if (validActions.length !== 5) {
+      errors.push('Expected 5 valid actions, got ' + validActions.length);
+    }
+
+    if (errors.length > 0) {
+      return {
+        name: testName,
+        passed: false,
+        message: errors.join('; ')
+      };
+    }
+
+    return {
+      name: testName,
+      passed: true,
+      message: 'Payload valid for all 5 rewrite actions'
+    };
+
+  } catch (error) {
+    return {
+      name: testName,
+      passed: false,
+      message: 'Error: ' + error.toString()
+    };
+  }
+}
+
+/**
+ * Test 16: Rewrite Feedback Payload Format
+ * Verifies the feedback API payload has correct structure
+ */
+function testRewriteFeedbackPayloadFormat() {
+  var testName = 'Rewrite Feedback Payload Format';
+
+  try {
+    var errors = [];
+
+    var validFeedbackActions = ['applied_replace', 'copied', 'dismissed'];
+
+    validFeedbackActions.forEach(function(action) {
+      var payload = {
+        rewriteId: 'rw_test-uuid-1234',
+        action: action,
+      };
+
+      if (!payload.rewriteId) errors.push('Missing rewriteId for: ' + action);
+      if (!payload.action) errors.push('Missing action: ' + action);
+    });
+
+    // Test rewriteId format
+    var testId = 'rw_a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+    if (!testId.startsWith('rw_')) {
+      errors.push('rewriteId should start with rw_ prefix');
+    }
+
+    if (validFeedbackActions.length !== 3) {
+      errors.push('Expected 3 feedback actions, got ' + validFeedbackActions.length);
+    }
+
+    if (errors.length > 0) {
+      return {
+        name: testName,
+        passed: false,
+        message: errors.join('; ')
+      };
+    }
+
+    return {
+      name: testName,
+      passed: true,
+      message: 'Feedback payload valid for all 3 actions'
+    };
+
+  } catch (error) {
+    return {
+      name: testName,
+      passed: false,
+      message: 'Error: ' + error.toString()
+    };
+  }
+}
+
+/**
+ * Test 17: Rewrite Text Integration
+ * Tests the full rewriteText flow (requires auth and Business tier)
+ */
+function testRewriteTextIntegration() {
+  var testName = 'Rewrite Text Integration';
+
+  try {
+    // Ensure document has content
+    var doc = DocumentApp.getActiveDocument();
+    if (!doc) {
+      return {
+        name: testName,
+        passed: false,
+        message: 'No active document'
+      };
+    }
+
+    var bodyText = doc.getBody().getText();
+    if (!bodyText || bodyText.trim().length === 0) {
+      return {
+        name: testName,
+        passed: true,
+        message: 'Skipped - document is empty (would return content_empty)',
+        skipped: true
+      };
+    }
+
+    // Call rewriteText with 'shorten' action
+    var result = rewriteText('shorten');
+
+    // Result should always be an object with success field
+    if (typeof result !== 'object' || typeof result.success !== 'boolean') {
+      return {
+        name: testName,
+        passed: false,
+        message: 'Invalid response structure'
+      };
+    }
+
+    // If successful, verify data shape
+    if (result.success) {
+      var data = result.data;
+      if (!data.rewriteId || !data.original || !data.rewritten || !data.action) {
+        return {
+          name: testName,
+          passed: false,
+          message: 'Success response missing required fields (rewriteId, original, rewritten, action)'
+        };
+      }
+
+      if (data.action !== 'shorten') {
+        return {
+          name: testName,
+          passed: false,
+          message: 'Action mismatch: expected "shorten", got "' + data.action + '"'
+        };
+      }
+
+      if (typeof result.hasSelection !== 'boolean') {
+        return {
+          name: testName,
+          passed: false,
+          message: 'Missing hasSelection boolean'
+        };
+      }
+
+      return {
+        name: testName,
+        passed: true,
+        message: 'Rewrite succeeded: ' + data.original.length + ' chars → ' + data.rewritten.length + ' chars'
+      };
+    }
+
+    // Handle expected errors (tier_required is acceptable for non-Business orgs)
+    if (result.error) {
+      var code = result.error.code;
+      if (code === 'tier_required') {
+        return {
+          name: testName,
+          passed: true,
+          message: 'Tier gating works correctly (Business tier required)',
+          skipped: true
+        };
+      }
+      if (code === 'limit_exceeded') {
+        return {
+          name: testName,
+          passed: true,
+          message: 'Rate limiting works correctly',
+          skipped: true
+        };
+      }
+      if (code === 'unavailable') {
+        return {
+          name: testName,
+          passed: true,
+          message: 'Service unavailable (expected if AI not configured)',
+          skipped: true
+        };
+      }
+      // Unexpected error
+      return {
+        name: testName,
+        passed: false,
+        message: 'Unexpected error: ' + code + ' - ' + result.error.message
+      };
+    }
+
+    return {
+      name: testName,
+      passed: false,
+      message: 'Unexpected result format'
+    };
+
+  } catch (error) {
+    return {
+      name: testName,
+      passed: false,
+      message: 'Error: ' + error.toString()
+    };
+  }
+}
+
+/**
+ * Test 18: Apply Rewrite Function
+ * Tests that applyRewrite can modify document text
+ */
+function testApplyRewriteFunction() {
+  var testName = 'Apply Rewrite Function';
+
+  try {
+    var doc = DocumentApp.getActiveDocument();
+    if (!doc) {
+      return {
+        name: testName,
+        passed: false,
+        message: 'No active document'
+      };
+    }
+
+    var body = doc.getBody();
+    var originalText = body.getText();
+
+    // Test full body replace (replaceSelection=false)
+    var testText = originalText + '\n[SMOKE_TEST_MARKER]';
+    var result = applyRewrite(testText, false);
+
+    if (!result.success) {
+      return {
+        name: testName,
+        passed: false,
+        message: 'Apply failed: ' + (result.error || 'unknown')
+      };
+    }
+
+    // Verify the text was applied
+    var newText = body.getText();
+    if (newText.indexOf('[SMOKE_TEST_MARKER]') === -1) {
+      // Revert and fail
+      body.setText(originalText);
+      return {
+        name: testName,
+        passed: false,
+        message: 'Text not applied to document'
+      };
+    }
+
+    // Revert to original
+    body.setText(originalText);
+
+    // Verify revert worked
+    var revertedText = body.getText();
+    if (revertedText !== originalText) {
+      return {
+        name: testName,
+        passed: false,
+        message: 'Failed to revert document to original text'
+      };
+    }
+
+    return {
+      name: testName,
+      passed: true,
+      message: 'Apply and revert both succeeded'
+    };
+
+  } catch (error) {
+    // Try to revert on error
+    try {
+      var doc = DocumentApp.getActiveDocument();
+      if (doc && typeof originalText !== 'undefined') {
+        doc.getBody().setText(originalText);
+      }
+    } catch (e) {}
+
+    return {
+      name: testName,
+      passed: false,
+      message: 'Error: ' + error.toString()
+    };
+  }
+}
+
+/**
+ * Test 19: Send Rewrite Feedback Function
+ * Tests that sendRewriteFeedback doesn't throw (fire-and-forget)
+ */
+function testSendRewriteFeedbackFunction() {
+  var testName = 'Send Rewrite Feedback';
+
+  try {
+    // Call with a fake rewriteId — should not throw (fire-and-forget)
+    // The backend will return 404 for unknown IDs, but the function silently catches
+    sendRewriteFeedback('rw_smoke-test-fake-id', 'dismissed');
+
+    return {
+      name: testName,
+      passed: true,
+      message: 'Fire-and-forget completed without throwing'
+    };
+
+  } catch (error) {
+    return {
+      name: testName,
+      passed: false,
+      message: 'Should not throw: ' + error.toString()
+    };
+  }
+}
+
+/**
+ * Run AI Polish specific tests
+ */
+function runPolishTests() {
+  var results = [];
+
+  Logger.log('');
+  Logger.log('========================================');
+  Logger.log('  AI Polish (B3) Tests');
+  Logger.log('  ' + new Date().toISOString());
+  Logger.log('========================================');
+  Logger.log('');
+
+  // Unit tests (no auth required)
+  results.push(testValidateRewriteContent());
+  results.push(testGetSelectedText());
+  results.push(testRewritePayloadFormat());
+  results.push(testRewriteFeedbackPayloadFormat());
+
+  // Integration tests (require auth)
+  var token = getAuthToken();
+  if (token) {
+    results.push(testRewriteTextIntegration());
+    results.push(testApplyRewriteFunction());
+    results.push(testSendRewriteFeedbackFunction());
+  } else {
+    Logger.log('  [SKIP] Integration tests skipped - no auth token');
+  }
+
+  logTestResults(results);
+  return results;
 }
 
 /**

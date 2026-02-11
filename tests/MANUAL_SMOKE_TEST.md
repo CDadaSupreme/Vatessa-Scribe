@@ -213,6 +213,107 @@ Run through this checklist before each release.
 | Re-open sidebar | Sidebar loads | | | |
 | Verify type restored | Policy type still selected/shown | | | |
 
+### 20. AI Polish — Mode Buttons
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Open sidebar on a connected doc | AI Polish section visible below AI Analysis | | | |
+| Verify 5 mode buttons | Shorten, Formal, Casual, Simplify (2x2), Compliance (full-width) | | | |
+| Buttons disabled when AI unavailable | All 5 buttons show disabled state | | | |
+| Buttons enabled when AI available | All 5 buttons clickable | | | |
+
+### 21. AI Polish — Rewrite with Selection
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Select a paragraph in the doc | Text highlighted | | | |
+| Click "Shorten" button | Loading spinner appears | | | |
+| Wait for rewrite | Before/After preview shown | | | |
+| Verify "Before" text | Shows the selected text | | | |
+| Verify "After" text | Shows rewritten (shorter) text | | | |
+| Verify blue border on After box | After box has blue accent border | | | |
+
+### 22. AI Polish — Rewrite without Selection
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Click anywhere (no selection) | No text highlighted | | | |
+| Click "Formal" button | Loading spinner appears | | | |
+| Wait for rewrite | Before/After preview shown | | | |
+| Verify "Before" text | Shows full document body text | | | |
+| Verify "After" text | Shows rewritten (formal tone) text | | | |
+
+### 23. AI Polish — All 5 Modes
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Select text, click "Shorten" | Rewrite returned, text is shorter | | | |
+| Dismiss, select text, click "Formal" | Rewrite returned, tone is formal | | | |
+| Dismiss, select text, click "Casual" | Rewrite returned, tone is casual | | | |
+| Dismiss, select text, click "Simplify" | Rewrite returned, text is simpler | | | |
+| Dismiss, select text, click "Compliance" | Rewrite returned, compliance issues listed if any | | | |
+
+### 24. AI Polish — Apply Action
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Get a rewrite result (with selection) | Before/After preview shown | | | |
+| Click "Apply" | Document text replaced with rewritten text | | | |
+| Verify preview dismissed | Polish section returns to button state | | | |
+| Press Ctrl+Z | Original text restored (undo works) | | | |
+
+### 25. AI Polish — Copy Action
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Get a rewrite result | Before/After preview shown | | | |
+| Click "Copy" | Text copied to clipboard | | | |
+| Paste in another app | Rewritten text appears | | | |
+| Verify preview dismissed | Polish section returns to button state | | | |
+
+### 26. AI Polish — Dismiss Action
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Get a rewrite result | Before/After preview shown | | | |
+| Click "Dismiss" | Preview clears | | | |
+| Verify button state | Mode buttons re-enabled | | | |
+| No document changes | Document text unchanged | | | |
+
+### 27. AI Polish — Compliance Mode Issues
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Select text with risky language | e.g. "We guarantee this will never happen" | | | |
+| Click "Compliance" | Rewrite returned | | | |
+| Verify issues list | Orange warning box with bullet list of issues | | | |
+| Verify rewritten text | After box shows compliance-safe rewrite | | | |
+
+### 28. AI Polish — Content Validation
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Open empty document, click any mode | Error: "No text to rewrite" | | | |
+| Select >10,000 chars, click any mode | Error: "Exceeds 10,000 characters" with count | | | |
+| Select normal text, click any mode | Rewrite succeeds | | | |
+
+### 29. AI Polish — Error States
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Disconnect internet, click any mode | Error message shown (not crash) | | | |
+| Use non-Business tier org | "Requires Business tier" + upgrade link | | | |
+| Exhaust monthly AI limit | "Monthly limit reached" + upgrade link | | | |
+| Click Dismiss on error | Error clears, buttons re-enabled | | | |
+
+### 30. AI Polish — Buttons Disabled During Result
+
+| Step | Expected | Pass | Fail | Notes |
+|------|----------|:----:|:----:|-------|
+| Get a rewrite result | Preview shown | | | |
+| Try clicking another mode button | Button is disabled | | | |
+| Dismiss result | Buttons re-enabled | | | |
+
 ---
 
 ## Performance Checks
@@ -247,7 +348,18 @@ Run through this checklist before each release.
 | Communication Sync | /4 | | |
 | Policy Sync | /6 | | |
 | Type Persistence | /4 | | |
-| **TOTAL** | **/84** | | |
+| Polish — Mode Buttons | /4 | | |
+| Polish — Rewrite with Selection | /6 | | |
+| Polish — Rewrite without Selection | /5 | | |
+| Polish — All 5 Modes | /5 | | |
+| Polish — Apply Action | /4 | | |
+| Polish — Copy Action | /4 | | |
+| Polish — Dismiss Action | /4 | | |
+| Polish — Compliance Issues | /4 | | |
+| Polish — Content Validation | /3 | | |
+| Polish — Error States | /4 | | |
+| Polish — Buttons During Result | /3 | | |
+| **TOTAL** | **/130** | | |
 
 ---
 

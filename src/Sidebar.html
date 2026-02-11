@@ -57,15 +57,15 @@
       transition: all 0.2s;
     }
     .btn-primary {
-      background: #1a73e8;
+      background: #0B7FCB;
       color: white;
     }
     .btn-primary:hover {
-      background: #1557b0;
+      background: #0969A8;
     }
     .btn-secondary {
       background: white;
-      color: #1a73e8;
+      color: #0B7FCB;
       border: 1px solid #dadce0;
     }
     .btn-secondary:hover {
@@ -130,7 +130,7 @@
     }
     .spinner {
       border: 2px solid #f3f4f6;
-      border-top: 2px solid #1a73e8;
+      border-top: 2px solid #0B7FCB;
       border-radius: 50%;
       width: 20px;
       height: 20px;
@@ -195,7 +195,7 @@
     }
     .type-selector select:focus {
       outline: none;
-      border-color: #1a73e8;
+      border-color: #0B7FCB;
     }
     .policy-note {
       background: #e8f0fe;
@@ -321,15 +321,138 @@
       margin-bottom: 12px;
     }
     .ai-error-container a {
-      color: #1a73e8;
+      color: #0B7FCB;
+    }
+
+    /* Polish Section Styles */
+    .polish-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #dadce0;
+    }
+    .polish-section-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .polish-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .polish-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #dadce0;
+      background: white;
+      color: #202124;
+      transition: all 0.2s;
+    }
+    .polish-btn:hover {
+      background: #f8f9fa;
+      border-color: #0B7FCB;
+      color: #0B7FCB;
+    }
+    .polish-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .polish-btn:disabled:hover {
+      background: white;
+      border-color: #dadce0;
+      color: #202124;
+    }
+    .polish-btn.full-width {
+      grid-column: 1 / -1;
+    }
+    .polish-btn-icon {
+      font-size: 14px;
+    }
+    .rewrite-loading {
+      text-align: center;
+      padding: 16px;
+      color: #5f6368;
+    }
+    .rewrite-preview {
+      margin-bottom: 12px;
+    }
+    .rewrite-preview-label {
+      font-size: 11px;
+      color: #5f6368;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .rewrite-preview-box {
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 12px;
+      max-height: 80px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .rewrite-preview-box.after {
+      max-height: 120px;
+      border-color: #0B7FCB;
+      background: #e8f0fe;
+    }
+    .compliance-issues {
+      background: #fff3e0;
+      border: 1px solid #ffcc80;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .compliance-issues-title {
+      font-weight: 500;
+      color: #e65100;
+      margin-bottom: 6px;
+    }
+    .compliance-issues ul {
+      margin: 0;
+      padding-left: 16px;
+      color: #bf360c;
+    }
+    .compliance-issues li {
+      margin-bottom: 4px;
+    }
+    .rewrite-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .rewrite-actions .btn {
+      flex: 1;
+      margin-bottom: 0;
+      font-size: 12px;
+      padding: 6px 10px;
+    }
+    .polish-tier-notice {
+      text-align: center;
+      padding: 16px;
+      background: #fce8e6;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .polish-tier-notice a {
+      color: #0B7FCB;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <svg class="logo" viewBox="0 0 24 24" fill="#1a73e8">
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-    </svg>
+    <img class="logo" src="https://vatessa.com/vatessa-logo.png" alt="Vatessa" />
     <span class="title">Vatessa</span>
   </div>
 
@@ -355,7 +478,19 @@
       aiResult: null,
       aiError: null,
       aiLimitExceeded: false,
+      // Polish-specific state
+      rewriteLoading: false,
+      rewriteResult: null,
+      rewriteError: null,
+      rewriteTierRequired: false,
+      // Device auth state
+      deviceAuth: null, // { deviceCode, userCode, verificationUrl, expiresIn }
+      deviceAuthPolling: false,
+      deviceAuthError: null,
+      deviceAuthExpiry: null, // timestamp when code expires
     };
+
+    var deviceAuthPollInterval = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       checkStatus();
@@ -598,6 +733,211 @@
       return html;
     }
 
+    // ===== Polish Functions =====
+
+    function runRewrite(action) {
+      state.rewriteLoading = true;
+      state.rewriteResult = null;
+      state.rewriteError = null;
+      state.rewriteTierRequired = false;
+      render();
+
+      google.script.run
+        .withSuccessHandler(handleRewriteResult)
+        .withFailureHandler(handleRewriteError)
+        .rewriteText(action);
+    }
+
+    function handleRewriteResult(result) {
+      state.rewriteLoading = false;
+
+      if (!result.success) {
+        if (result.error && result.error.code === 'tier_required') {
+          state.rewriteTierRequired = true;
+        } else if (result.error && result.error.code === 'limit_exceeded') {
+          state.aiLimitExceeded = true;
+        } else if (result.error && result.error.code === 'auth_expired') {
+          state.rewriteError = 'Your session has expired. Please reconnect your Vatessa account.';
+        } else {
+          state.rewriteError = (result.error && result.error.message) || 'Unable to rewrite text.';
+        }
+        render();
+        return;
+      }
+
+      state.rewriteResult = {
+        rewriteId: result.data.rewriteId,
+        original: result.data.original,
+        rewritten: result.data.rewritten,
+        action: result.data.action,
+        issues: result.data.issues || null,
+        hasSelection: result.hasSelection,
+      };
+      render();
+    }
+
+    function handleRewriteError(error) {
+      state.rewriteLoading = false;
+      state.rewriteError = 'Unable to connect to Vatessa. Please check your connection and try again.';
+      render();
+    }
+
+    function applyRewriteToDoc() {
+      if (!state.rewriteResult) return;
+
+      var rewriteId = state.rewriteResult.rewriteId;
+      var rewrittenText = state.rewriteResult.rewritten;
+      var replaceSelection = state.rewriteResult.hasSelection;
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            state.rewriteResult = null;
+            render();
+          } else {
+            state.rewriteError = result.error || 'Failed to apply rewrite.';
+            render();
+          }
+        })
+        .withFailureHandler(function() {
+          state.rewriteError = 'Failed to apply rewrite to document.';
+          render();
+        })
+        .applyRewrite(rewrittenText, replaceSelection);
+
+      // Send feedback (fire-and-forget)
+      google.script.run.sendRewriteFeedback(rewriteId, 'applied_replace');
+    }
+
+    function copyRewriteToClipboard() {
+      if (!state.rewriteResult) return;
+
+      var text = state.rewriteResult.rewritten;
+      var rewriteId = state.rewriteResult.rewriteId;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          state.rewriteResult = null;
+          render();
+        }).catch(function() {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+
+      // Send feedback (fire-and-forget)
+      google.script.run.sendRewriteFeedback(rewriteId, 'copied');
+    }
+
+    function fallbackCopy(text) {
+      var textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(textarea);
+      state.rewriteResult = null;
+      render();
+    }
+
+    function dismissRewrite() {
+      if (state.rewriteResult) {
+        google.script.run.sendRewriteFeedback(state.rewriteResult.rewriteId, 'dismissed');
+      }
+      state.rewriteResult = null;
+      state.rewriteError = null;
+      state.rewriteTierRequired = false;
+      render();
+    }
+
+    function renderPolishSection() {
+      var html = '<div class="polish-section">';
+      html += '<div class="polish-section-title">AI Polish</div>';
+
+      // Tier required notice
+      if (state.rewriteTierRequired) {
+        html += '<div class="polish-tier-notice">' +
+          '<div style="font-size:24px;margin-bottom:8px;">&#x1F512;</div>' +
+          '<div style="font-size:12px;color:#5f6368;margin-bottom:8px;">AI Polish requires a Business tier plan.</div>' +
+          '<a href="https://vatessa.com/upgrade" target="_blank">Upgrade Plan</a></div>';
+        html += '</div>';
+        return html;
+      }
+
+      // Mode buttons
+      var disabled = !state.aiAvailable || state.rewriteLoading || state.rewriteResult;
+      var disabledAttr = disabled ? ' disabled' : '';
+
+      html += '<div class="polish-buttons">';
+      html += '<button class="polish-btn" onclick="runRewrite(\'shorten\')"' + disabledAttr + '>' +
+        '<span class="polish-btn-icon">&#9986;</span> Shorten</button>';
+      html += '<button class="polish-btn" onclick="runRewrite(\'formal\')"' + disabledAttr + '>' +
+        '<span class="polish-btn-icon">&#127891;</span> Formal</button>';
+      html += '<button class="polish-btn" onclick="runRewrite(\'casual\')"' + disabledAttr + '>' +
+        '<span class="polish-btn-icon">&#128172;</span> Casual</button>';
+      html += '<button class="polish-btn" onclick="runRewrite(\'simplify\')"' + disabledAttr + '>' +
+        '<span class="polish-btn-icon">&#10024;</span> Simplify</button>';
+      html += '<button class="polish-btn full-width" onclick="runRewrite(\'compliance\')"' + disabledAttr + '>' +
+        '<span class="polish-btn-icon">&#128737;</span> Compliance</button>';
+      html += '</div>';
+
+      // Loading
+      if (state.rewriteLoading) {
+        html += '<div class="rewrite-loading"><div class="spinner"></div><p>Rewriting...</p></div>';
+      }
+
+      // Error
+      if (state.rewriteError) {
+        html += '<div class="ai-error-container" role="alert">' +
+          '<div class="ai-error-icon">&#9888;&#65039;</div>' +
+          '<div class="ai-error-message">' + escapeHtml(state.rewriteError) + '</div>' +
+          '<button class="btn btn-secondary" onclick="dismissRewrite()">Dismiss</button></div>';
+      }
+
+      // Limit exceeded (shared with AI section state)
+      if (state.aiLimitExceeded && !state.rewriteResult) {
+        // Already shown in AI section
+      }
+
+      // Result preview
+      if (state.rewriteResult) {
+        var r = state.rewriteResult;
+
+        // Compliance issues
+        if (r.issues && r.issues.length > 0) {
+          html += '<div class="compliance-issues">' +
+            '<div class="compliance-issues-title">&#9888;&#65039; Compliance Issues</div><ul>';
+          for (var i = 0; i < r.issues.length; i++) {
+            html += '<li>' + escapeHtml(r.issues[i]) + '</li>';
+          }
+          html += '</ul></div>';
+        }
+
+        // Before
+        html += '<div class="rewrite-preview">' +
+          '<div class="rewrite-preview-label">Before</div>' +
+          '<div class="rewrite-preview-box">' + escapeHtml(r.original) + '</div></div>';
+
+        // After
+        html += '<div class="rewrite-preview">' +
+          '<div class="rewrite-preview-label">After</div>' +
+          '<div class="rewrite-preview-box after">' + escapeHtml(r.rewritten) + '</div></div>';
+
+        // Actions
+        html += '<div class="rewrite-actions">' +
+          '<button class="btn btn-primary" onclick="applyRewriteToDoc()">Apply</button>' +
+          '<button class="btn btn-secondary" onclick="copyRewriteToClipboard()">Copy</button>' +
+          '<button class="btn btn-secondary" onclick="dismissRewrite()">Dismiss</button>' +
+          '</div>';
+      }
+
+      html += '</div>';
+      return html;
+    }
+
     function checkStatus() {
       google.script.run
         .withSuccessHandler(handleStatusResponse)
@@ -729,10 +1069,105 @@
     }
 
     function connect() {
+      state.loading = true;
+      state.deviceAuthError = null;
+      render();
+
       google.script.run
-        .withSuccessHandler(() => setTimeout(checkStatus, 1000))
-        .withFailureHandler(handleError)
-        .initiateOAuth();
+        .withSuccessHandler(function(result) {
+          state.loading = false;
+          if (result.error) {
+            state.deviceAuthError = result.error;
+            render();
+            return;
+          }
+          state.deviceAuth = result;
+          state.deviceAuthExpiry = Date.now() + (result.expiresIn * 1000);
+          state.deviceAuthPolling = true;
+          render();
+          startDeviceAuthPolling(result.deviceCode);
+        })
+        .withFailureHandler(function(err) {
+          state.loading = false;
+          state.deviceAuthError = err.message || 'Failed to start connection';
+          render();
+        })
+        .initiateDeviceAuth();
+    }
+
+    function startDeviceAuthPolling(deviceCode) {
+      // Clear any existing interval
+      if (deviceAuthPollInterval) {
+        clearInterval(deviceAuthPollInterval);
+      }
+
+      deviceAuthPollInterval = setInterval(function() {
+        // Check if expired client-side
+        if (state.deviceAuthExpiry && Date.now() > state.deviceAuthExpiry) {
+          stopDeviceAuthPolling();
+          state.deviceAuth = null;
+          state.deviceAuthPolling = false;
+          state.deviceAuthError = 'Code expired. Please try again.';
+          render();
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result.status === 'approved' && result.token) {
+              stopDeviceAuthPolling();
+              // Store the token and refresh
+              google.script.run
+                .withSuccessHandler(function() {
+                  state.deviceAuth = null;
+                  state.deviceAuthPolling = false;
+                  state.deviceAuthError = null;
+                  checkStatus();
+                })
+                .withFailureHandler(function() {
+                  state.deviceAuthError = 'Failed to save connection. Please try again.';
+                  state.deviceAuthPolling = false;
+                  render();
+                })
+                .completeDeviceAuth(result.token);
+            } else if (result.status === 'expired') {
+              stopDeviceAuthPolling();
+              state.deviceAuth = null;
+              state.deviceAuthPolling = false;
+              state.deviceAuthError = 'Code expired. Please try again.';
+              render();
+            }
+            // If 'pending', do nothing — keep polling
+          })
+          .withFailureHandler(function() {
+            // Ignore transient polling errors, keep trying
+          })
+          .pollDeviceAuth(deviceCode);
+      }, 3000);
+    }
+
+    function stopDeviceAuthPolling() {
+      if (deviceAuthPollInterval) {
+        clearInterval(deviceAuthPollInterval);
+        deviceAuthPollInterval = null;
+      }
+    }
+
+    function cancelDeviceAuth() {
+      stopDeviceAuthPolling();
+      state.deviceAuth = null;
+      state.deviceAuthPolling = false;
+      state.deviceAuthError = null;
+      state.deviceAuthExpiry = null;
+      render();
+    }
+
+    function getCountdownText() {
+      if (!state.deviceAuthExpiry) return '';
+      var remaining = Math.max(0, Math.floor((state.deviceAuthExpiry - Date.now()) / 1000));
+      var mins = Math.floor(remaining / 60);
+      var secs = remaining % 60;
+      return mins + ':' + (secs < 10 ? '0' : '') + secs;
     }
 
     function disconnect() {
@@ -763,13 +1198,60 @@
       }
 
       if (!state.connected) {
-        content.innerHTML = '<div class="status-card">' +
+        // Device auth flow active — show code
+        if (state.deviceAuth && state.deviceAuthPolling) {
+          content.innerHTML = '<div class="status-card">' +
+            '<div class="status-label">Connection Code</div>' +
+            '<div style="font-family:monospace;font-size:28px;font-weight:bold;text-align:center;letter-spacing:4px;margin:12px 0;color:#0B7FCB;">' +
+            escapeHtml(state.deviceAuth.userCode) + '</div>' +
+            '<div style="text-align:center;margin-bottom:8px;">' +
+            '<a href="' + escapeHtml(state.deviceAuth.verificationUrl) + '" target="_blank" ' +
+            'style="color:#0B7FCB;font-size:13px;">Open app.vatessa.com/connect</a></div>' +
+            '<div style="text-align:center;font-size:11px;color:#5f6368;">Code expires in <span id="countdown">' +
+            getCountdownText() + '</span></div>' +
+            '</div>' +
+            '<div style="text-align:center;margin-bottom:12px;">' +
+            '<div class="spinner" style="margin:8px auto;"></div>' +
+            '<p style="font-size:12px;color:#5f6368;">Waiting for authorization...</p></div>' +
+            '<button class="btn btn-secondary" onclick="cancelDeviceAuth()">Cancel</button>';
+
+          // Update countdown every second
+          if (!window._countdownInterval) {
+            window._countdownInterval = setInterval(function() {
+              var el = document.getElementById('countdown');
+              if (el) { el.textContent = getCountdownText(); }
+            }, 1000);
+          }
+          return;
+        }
+
+        // Clear countdown if not in device auth
+        if (window._countdownInterval) {
+          clearInterval(window._countdownInterval);
+          window._countdownInterval = null;
+        }
+
+        var connectHtml = '<div class="status-card">' +
           '<div class="status-label">Status</div>' +
           '<div class="status-value">Not connected</div></div>' +
           '<p style="color:#5f6368;margin-bottom:16px;font-size:12px;">' +
-          'Connect to Vatessa to analyze your document and manage approvals.</p>' +
-          '<button class="btn btn-primary" onclick="connect()">Connect to Vatessa</button>';
+          'Connect to Vatessa to analyze your document and manage approvals.</p>';
+
+        if (state.deviceAuthError) {
+          connectHtml += '<div class="error" style="margin-bottom:12px;">' +
+            escapeHtml(state.deviceAuthError) + '</div>';
+        }
+
+        connectHtml += '<button class="btn btn-primary" onclick="connect()">Connect to Vatessa</button>';
+
+        content.innerHTML = connectHtml;
         return;
+      }
+
+      // Clear countdown and polling when connected
+      if (window._countdownInterval) {
+        clearInterval(window._countdownInterval);
+        window._countdownInterval = null;
       }
 
       let html = '';
@@ -812,6 +1294,9 @@
 
       // Add AI section (replaces old Analyze Now button)
       html += renderAiSection();
+
+      // Add Polish section
+      html += renderPolishSection();
 
       if (linked && status.status) {
         const apiStatus = status.status;

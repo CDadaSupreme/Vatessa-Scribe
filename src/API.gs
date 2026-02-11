@@ -4,8 +4,7 @@
  */
 
 const VatessaApi = {
-  // BASE_URL: 'https://api.vatessa.com',  // Production
-  BASE_URL: 'https://triumphal-ember-endogenous.ngrok-free.dev',  // Development
+  BASE_URL: 'https://api.vatessa.com',
 
   /**
    * Get auth token from OAuth service
@@ -135,6 +134,47 @@ const VatessaApi = {
       method: 'POST',
       payload: {
         content: content,
+      },
+    });
+  },
+
+  /**
+   * Rewrite content using AI
+   * NOTE: Path is /v2/ai/rewrite (NOT /api/v2/ai/rewrite)
+   * @param {string} content - Text to rewrite (max 10,000 chars)
+   * @param {string} action - 'shorten' | 'formal' | 'casual' | 'simplify' | 'compliance'
+   * @param {Object} [context] - Optional context for rewrite
+   * @param {string} [context.messageType] - 'communication' or 'policy'
+   * @param {string} [context.audience] - Target audience description
+   * @returns {Object} Rewrite result with { data, usage } or { error, status }
+   */
+  rewriteContent(content, action, context) {
+    var payload = {
+      content: content,
+      action: action,
+    };
+    if (context) {
+      payload.context = context;
+    }
+    return this.fetch('/v2/ai/rewrite', {
+      method: 'POST',
+      payload: payload,
+    });
+  },
+
+  /**
+   * Send feedback for a rewrite
+   * NOTE: Path is /v2/ai/rewrite/feedback
+   * @param {string} rewriteId - ID from rewrite response
+   * @param {string} feedbackAction - 'applied_replace' | 'copied' | 'dismissed'
+   * @returns {Object} { success: true } or { error, status }
+   */
+  sendRewriteFeedback(rewriteId, feedbackAction) {
+    return this.fetch('/v2/ai/rewrite/feedback', {
+      method: 'POST',
+      payload: {
+        rewriteId: rewriteId,
+        action: feedbackAction,
       },
     });
   },

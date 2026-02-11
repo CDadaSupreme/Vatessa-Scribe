@@ -178,8 +178,8 @@ function clearAuthToken() {
 }
 
 /**
- * Shows the token setup dialog
- * Called when user needs to connect to Vatessa
+ * Shows the token setup dialog (legacy manual PAT entry)
+ * Called when user needs to connect to Vatessa manually
  */
 function showTokenSetup() {
   var html = HtmlService.createHtmlOutput(
@@ -246,6 +246,76 @@ function showTokenSetup() {
     .setWidth(450)
     .setHeight(420);
   DocumentApp.getUi().showModalDialog(html, 'Connect to Vatessa');
+}
+
+// ===== Device Authorization Flow =====
+
+/**
+ * Initiates a device authorization request
+ * Called from sidebar to get a user code for display
+ * @returns {Object} { deviceCode, userCode, verificationUrl, expiresIn } or { error }
+ */
+function initiateDeviceAuth() {
+  try {
+    var response = UrlFetchApp.fetch(VatessaApi.BASE_URL + '/v2/device-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      muteHttpExceptions: true,
+    });
+
+    var code = response.getResponseCode();
+    var data = JSON.parse(response.getContentText());
+
+    if (code >= 200 && code < 300) {
+      return data;
+    }
+
+    return { error: (data.error && data.error.message) || 'Failed to start connection' };
+  } catch (e) {
+    Logger.log('Device auth initiation error: ' + e.toString());
+    return { error: 'Network error: ' + e.message };
+  }
+}
+
+/**
+ * Polls for device authorization status
+ * Called from sidebar every 3 seconds
+ * @param {string} deviceCode - The device code to poll
+ * @returns {Object} { status: 'pending'|'approved'|'expired', token?: string }
+ */
+function pollDeviceAuth(deviceCode) {
+  try {
+    var response = UrlFetchApp.fetch(
+      VatessaApi.BASE_URL + '/v2/device-auth/poll/' + deviceCode,
+      {
+        method: 'GET',
+        muteHttpExceptions: true,
+      }
+    );
+
+    var code = response.getResponseCode();
+    var data = JSON.parse(response.getContentText());
+
+    if (code >= 200 && code < 300) {
+      return data;
+    }
+
+    return { status: 'expired' };
+  } catch (e) {
+    Logger.log('Device auth poll error: ' + e.toString());
+    return { status: 'error', error: e.message };
+  }
+}
+
+/**
+ * Completes device authorization by storing the received token
+ * Called from sidebar when poll returns approved status
+ * @param {string} token - The PAT received from device auth flow
+ * @returns {Object} { success: boolean }
+ */
+function completeDeviceAuth(token) {
+  setAccessToken(token);
+  return { success: true };
 }
 
 /**
