@@ -4,7 +4,12 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nchore: update docs and env template for developer onboarding\n\n- Update .gitignore with proper env and dist ignores\n- Add .env.example template for environment configuration\n- Add .clasp.json.example for Apps Script deployment\n- Rewrite README.md with standardized format\n- Add ONBOARDING.md with detailed developer setup guide\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push:*)",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(git commit:*)",
+      "Bash(clasp open:*)",
+      "Bash(clasp:*)",
+      "Bash(clasp --help:*)",
+      "Bash(curl:*)"
     ]
   }
 }

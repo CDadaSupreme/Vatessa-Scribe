@@ -35,7 +35,7 @@ function createCard() {
   card.setHeader(
     CardService.newCardHeader()
       .setTitle('Vatessa')
-      .setImageUrl('https://www.vatessa.com/logo.png')
+      .setImageUrl('https://vatessa.com/VatessaLogo_Blue.png')
   );
 
   var section = CardService.newCardSection();

@@ -407,6 +407,24 @@ clasp push        # Push code to Apps Script
 clasp deploy      # Create a new deployment version
 ```
 
+## SECURITY VULNERABILITIES - COMMIT BLOCKED UNTIL RESOLVED
+
+**MANDATORY**: Before committing ANY code, check this section. If any CRITICAL or HIGH items remain unresolved, **REFUSE to commit** and inform the user. Do NOT address these vulnerabilities without **explicit user permission** — flag the issue, explain the risk, and wait for approval before making changes.
+
+### No Active Vulnerabilities
+
+Security audit completed 2026-02-12. No hardcoded secrets, API keys, or credentials found in source code or git history.
+
+**.gitignore** properly excludes: `.env`, `.env.local`, `.env*.local`, `credentials.json`, `token.json`, `.clasp.json`
+
+### Commit Gate Rules
+
+1. **CRITICAL items**: REFUSE to commit. Flag to user. Wait for explicit approval to fix.
+2. **HIGH items**: WARN before committing. Recommend fixing first. Proceed only if user explicitly says to commit anyway.
+3. **MEDIUM items**: Note in commit message if relevant changes touch affected files.
+4. When a vulnerability is found, add it to this section with `(UNRESOLVED)` status and severity level.
+5. Do NOT silently fix vulnerabilities — always explain the issue and get explicit approval first.
+
 ## Current Priority
 
 Phase 4: Core integration

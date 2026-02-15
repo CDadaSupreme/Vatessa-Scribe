@@ -52,7 +52,7 @@ Ensure all OAuth scopes are declared:
   "addOns": {
     "common": {
       "name": "Vatessa",
-      "logoUrl": "https://www.vatessa.com/logo.png",
+      "logoUrl": "https://vatessa.com/VatessaLogo_Blue.png",
       "layoutProperties": {
         "primaryColor": "#4F46E5"
       }
