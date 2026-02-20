@@ -4,7 +4,8 @@
  */
 
 const VatessaApi = {
-  BASE_URL: 'https://api.vatessa.com',
+  // BASE_URL: 'https://api.vatessa.com',  // Production
+  BASE_URL: 'https://triumphal-ember-endogenous.ngrok-free.dev',  // Development
 
   /**
    * Get auth token from OAuth service
@@ -36,6 +37,7 @@ const VatessaApi = {
       headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // TODO: Remove when switching to production API URL
         ...(options.headers || {}),
       },
       muteHttpExceptions: true,
@@ -139,47 +141,6 @@ const VatessaApi = {
   },
 
   /**
-   * Rewrite content using AI
-   * NOTE: Path is /v2/ai/rewrite (NOT /api/v2/ai/rewrite)
-   * @param {string} content - Text to rewrite (max 10,000 chars)
-   * @param {string} action - 'shorten' | 'formal' | 'casual' | 'simplify' | 'compliance'
-   * @param {Object} [context] - Optional context for rewrite
-   * @param {string} [context.messageType] - 'communication' or 'policy'
-   * @param {string} [context.audience] - Target audience description
-   * @returns {Object} Rewrite result with { data, usage } or { error, status }
-   */
-  rewriteContent(content, action, context) {
-    var payload = {
-      content: content,
-      action: action,
-    };
-    if (context) {
-      payload.context = context;
-    }
-    return this.fetch('/v2/ai/rewrite', {
-      method: 'POST',
-      payload: payload,
-    });
-  },
-
-  /**
-   * Send feedback for a rewrite
-   * NOTE: Path is /v2/ai/rewrite/feedback
-   * @param {string} rewriteId - ID from rewrite response
-   * @param {string} feedbackAction - 'applied_replace' | 'copied' | 'dismissed'
-   * @returns {Object} { success: true } or { error, status }
-   */
-  sendRewriteFeedback(rewriteId, feedbackAction) {
-    return this.fetch('/v2/ai/rewrite/feedback', {
-      method: 'POST',
-      payload: {
-        rewriteId: rewriteId,
-        action: feedbackAction,
-      },
-    });
-  },
-
-  /**
    * Analyze message content with AI (legacy method)
    * @deprecated Use analyzeContent() instead
    */
@@ -212,9 +173,9 @@ const VatessaApi = {
         audience: content.audience || '',
         audienceSize: content.audienceSize || 0,
         keyPoints: content.keyPoints || '',
-        content: content.content,
+        body: content.content,
         tone: content.tone || 'professional',
-        messageType: messageType || 'communication',
+        message_type: messageType || 'communication',
         sourceType: 'google_docs',
         sourceId: content.id,
       },
@@ -233,7 +194,7 @@ const VatessaApi = {
         audience: content.audience || '',
         audienceSize: content.audienceSize || 0,
         keyPoints: content.keyPoints || '',
-        content: content.content,
+        body: content.content,
       },
     });
   },

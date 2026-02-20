@@ -1123,6 +1123,7 @@
                   state.deviceAuthPolling = false;
                   state.deviceAuthError = null;
                   checkStatus();
+                  checkAiAvailability();
                 })
                 .withFailureHandler(function() {
                   state.deviceAuthError = 'Failed to save connection. Please try again.';
@@ -1193,7 +1194,7 @@
 
       if (state.error) {
         content.innerHTML = '<div class="error">' + escapeHtml(state.error) + '</div>' +
-          '<button class="btn btn-secondary" onclick="state.error=null;checkStatus();">Retry</button>';
+          '<button class="btn btn-secondary" onclick="state.error=null;checkStatus();checkAiAvailability();">Retry</button>';
         return;
       }
 

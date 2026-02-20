@@ -74,6 +74,7 @@ function validateToken(token) {
       headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
       },
       muteHttpExceptions: true,
     });
@@ -259,7 +260,10 @@ function initiateDeviceAuth() {
   try {
     var response = UrlFetchApp.fetch(VatessaApi.BASE_URL + '/v2/device-auth', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
       muteHttpExceptions: true,
     });
 
@@ -289,6 +293,9 @@ function pollDeviceAuth(deviceCode) {
       VatessaApi.BASE_URL + '/v2/device-auth/poll/' + deviceCode,
       {
         method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
         muteHttpExceptions: true,
       }
     );
