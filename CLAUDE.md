@@ -407,6 +407,23 @@ clasp push        # Push code to Apps Script
 clasp deploy      # Create a new deployment version
 ```
 
+## Testing Lessons (Sentinel — 2026-03-04)
+
+### Playwright Selector Rule
+NEVER mix `text=Foo` Playwright selector syntax with CSS selectors via commas in a
+single `locator()` call — it silently breaks the entire locator with no error.
+
+```typescript
+// ❌ BROKEN — text= mixed with CSS via comma
+page.locator('[data-testid="foo"], text=Some Text')
+// ✅ CORRECT — :has-text() works in CSS selector context
+page.locator('[data-testid="foo"], h1:has-text("Library")')
+```
+
+Sentinel suite: **83/83 passing** as of 2026-03-04 (tag: `sentinel-green-v1` in Vatessa-Hive).
+
+---
+
 ## SECURITY VULNERABILITIES - COMMIT BLOCKED UNTIL RESOLVED
 
 **MANDATORY**: Before committing ANY code, check this section. If any CRITICAL or HIGH items remain unresolved, **REFUSE to commit** and inform the user. Do NOT address these vulnerabilities without **explicit user permission** — flag the issue, explain the risk, and wait for approval before making changes.
